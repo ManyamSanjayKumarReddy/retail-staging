@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, MessageCircle } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -12,48 +13,76 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-const WHATSAPP_NUMBER = "1234567890"; // Replace with actual number
+const WHATSAPP_NUMBER = "1234567890";
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
     "Hello! I'm interested in your products."
   )}`;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full transition-all duration-300",
+        isScrolled
+          ? "bg-background/95 backdrop-blur-lg shadow-sm border-b border-border/50"
+          : "bg-background border-b border-border"
+      )}
+    >
       <div className="container flex h-16 items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-primary">Retail</span>
+        <Link 
+          to="/" 
+          className="group flex items-center gap-1 transition-transform duration-300 hover:scale-105"
+        >
+          <span className="text-xl font-bold text-primary transition-colors">Retail</span>
           <span className="text-xl font-semibold text-foreground">Store</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
               className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
+                "relative text-sm font-medium transition-colors duration-300 hover:text-primary",
                 location.pathname === link.href
                   ? "text-primary"
-                  : "text-foreground-secondary"
+                  : "text-foreground-secondary",
+                "link-underline"
               )}
             >
               {link.label}
+              {location.pathname === link.href && (
+                <span className="absolute -bottom-1 left-0 h-0.5 w-full bg-primary rounded-full" />
+              )}
             </Link>
           ))}
         </nav>
 
         {/* WhatsApp CTA */}
         <div className="hidden md:block">
-          <Button asChild variant="whatsapp" size="sm">
+          <Button 
+            asChild 
+            variant="whatsapp" 
+            size="sm" 
+            className="btn-press group"
+          >
             <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="mr-2 h-4 w-4" />
+              <WhatsAppIcon className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
               Order Now
             </a>
           </Button>
@@ -61,46 +90,59 @@ export const Header = () => {
 
         {/* Mobile Menu Toggle */}
         <button
-          className="md:hidden"
+          className="relative md:hidden p-2 rounded-lg transition-colors hover:bg-muted"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Toggle menu"
         >
-          {isMenuOpen ? (
-            <X className="h-6 w-6 text-foreground" />
-          ) : (
+          <span className={cn(
+            "block transition-all duration-300",
+            isMenuOpen ? "opacity-0 rotate-90 scale-0" : "opacity-100 rotate-0 scale-100"
+          )}>
             <Menu className="h-6 w-6 text-foreground" />
-          )}
+          </span>
+          <span className={cn(
+            "absolute inset-0 flex items-center justify-center transition-all duration-300",
+            isMenuOpen ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0"
+          )}>
+            <X className="h-6 w-6 text-foreground" />
+          </span>
         </button>
       </div>
 
       {/* Mobile Navigation */}
-      {isMenuOpen && (
-        <div className="border-t border-border bg-background md:hidden">
-          <nav className="container flex flex-col gap-4 py-4">
-            {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                to={link.href}
-                onClick={() => setIsMenuOpen(false)}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary",
-                  location.pathname === link.href
-                    ? "text-primary"
-                    : "text-foreground-secondary"
-                )}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Button asChild variant="whatsapp" size="sm" className="w-full">
+      <div
+        className={cn(
+          "overflow-hidden transition-all duration-300 ease-out md:hidden",
+          isMenuOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+        )}
+      >
+        <nav className="container flex flex-col gap-1 py-4">
+          {navLinks.map((link, index) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              onClick={() => setIsMenuOpen(false)}
+              className={cn(
+                "px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300",
+                location.pathname === link.href
+                  ? "bg-primary/10 text-primary"
+                  : "text-foreground-secondary hover:bg-muted hover:text-foreground"
+              )}
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="px-4 pt-2">
+            <Button asChild variant="whatsapp" size="sm" className="w-full btn-press">
               <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="mr-2 h-4 w-4" />
+                <WhatsAppIcon className="mr-2 h-4 w-4" />
                 Order Now
               </a>
             </Button>
-          </nav>
-        </div>
-      )}
+          </div>
+        </nav>
+      </div>
     </header>
   );
 };

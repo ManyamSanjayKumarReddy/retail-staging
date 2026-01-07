@@ -4,13 +4,13 @@ import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { MessageCircle, ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon, Clock, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const WHATSAPP_NUMBER = "1234567890";
 
-// Sample rental data
 const rentalsData: Record<string, {
   id: string;
   name: string;
@@ -58,7 +58,6 @@ const RentalDetail = () => {
   const [fromDate, setFromDate] = useState<Date>();
   const [toDate, setToDate] = useState<Date>();
 
-  // Default item if not found
   const item = id && rentalsData[id] ? rentalsData[id] : {
     id: id || "1",
     name: "Rental Item",
@@ -77,57 +76,50 @@ const RentalDetail = () => {
   const whatsappMessage = `Hello! I would like to rent: ${item.name} - Price: ₹${item.price}/day${dateRange ? ` ${dateRange}` : ""}`;
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % item.images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + item.images.length) % item.images.length);
-  };
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % item.images.length);
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + item.images.length) % item.images.length);
 
   return (
     <Layout>
-      <section className="bg-background py-8 md:py-12">
+      <section className="bg-background py-10 md:py-16">
         <div className="container">
           {/* Back Button */}
           <Link
             to="/rentals"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-foreground-secondary transition-colors hover:text-primary"
+            className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-foreground-secondary transition-all duration-300 hover:text-primary hover:-translate-x-1"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Rentals
           </Link>
 
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="grid gap-10 lg:grid-cols-2">
             {/* Image Slider */}
-            <div className="relative">
-              <div className="aspect-square overflow-hidden rounded-xl bg-muted">
+            <div className="relative animate-fade-in">
+              <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
                 <img
                   src={item.images[currentImage]}
                   alt={item.name}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-500"
                 />
               </div>
 
               {/* Rental Badge */}
-              <span className="absolute left-4 top-4 rounded-md bg-primary px-3 py-1 text-sm font-semibold text-primary-foreground">
+              <span className="absolute left-4 top-4 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg">
                 Available for Rent
               </span>
 
-              {/* Navigation Arrows */}
+              {/* Navigation */}
               {item.images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-md backdrop-blur transition-colors hover:bg-background"
-                    aria-label="Previous image"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-md backdrop-blur transition-colors hover:bg-background"
-                    aria-label="Next image"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
@@ -141,10 +133,9 @@ const RentalDetail = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentImage(index)}
-                      className={`h-2 w-2 rounded-full transition-colors ${
-                        index === currentImage ? "bg-primary" : "bg-background/80"
+                      className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                        index === currentImage ? "bg-primary w-6" : "bg-background/80"
                       }`}
-                      aria-label={`Go to image ${index + 1}`}
                     />
                   ))}
                 </div>
@@ -152,32 +143,33 @@ const RentalDetail = () => {
             </div>
 
             {/* Rental Info */}
-            <div>
-              <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+            <div className="animate-slide-in-right">
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 {item.name}
               </h1>
 
               {/* Price */}
-              <div className="mt-4 flex items-center gap-2">
-                <span className="text-3xl font-bold text-foreground">
-                  ₹{item.price}
-                </span>
-                <span className="text-muted-foreground">/day</span>
+              <div className="mt-5 flex items-center gap-2">
+                <span className="text-3xl font-bold text-primary">₹{item.price}</span>
+                <span className="text-lg text-muted-foreground">/day</span>
               </div>
 
               {/* Description */}
-              <p className="mt-6 text-foreground-secondary leading-relaxed">
+              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">
                 {item.description}
               </p>
 
               {/* Date Selection */}
-              <div className="mt-8">
-                <h3 className="mb-4 text-lg font-semibold text-foreground">
-                  Select Rental Period
-                </h3>
+              <div className="mt-8 p-5 rounded-xl bg-muted/50 border border-border">
+                <div className="flex items-center gap-2 mb-4">
+                  <Clock className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-bold text-foreground">
+                    Select Rental Period
+                  </h3>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">
+                    <label className="mb-2 block text-sm font-semibold text-foreground">
                       From Date
                     </label>
                     <Popover>
@@ -194,17 +186,12 @@ const RentalDetail = () => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={fromDate}
-                          onSelect={setFromDate}
-                          initialFocus
-                        />
+                        <Calendar mode="single" selected={fromDate} onSelect={setFromDate} initialFocus />
                       </PopoverContent>
                     </Popover>
                   </div>
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-foreground">
+                    <label className="mb-2 block text-sm font-semibold text-foreground">
                       To Date
                     </label>
                     <Popover>
@@ -221,37 +208,26 @@ const RentalDetail = () => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={toDate}
-                          onSelect={setToDate}
-                          initialFocus
-                        />
+                        <Calendar mode="single" selected={toDate} onSelect={setToDate} initialFocus />
                       </PopoverContent>
                     </Popover>
                   </div>
                 </div>
               </div>
 
-              {/* Specifications */}
+              {/* What's Included */}
               <div className="mt-8">
-                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                <h3 className="mb-4 text-lg font-bold text-foreground flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-whatsapp" />
                   What's Included
                 </h3>
-                <div className="rounded-lg border border-border overflow-hidden">
+                <div className="rounded-xl border border-border overflow-hidden">
                   <table className="w-full">
                     <tbody>
                       {item.specifications.map((spec, index) => (
-                        <tr
-                          key={spec.label}
-                          className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}
-                        >
-                          <td className="px-4 py-3 text-sm font-medium text-foreground">
-                            {spec.label}
-                          </td>
-                          <td className="px-4 py-3 text-sm text-foreground-secondary">
-                            {spec.value}
-                          </td>
+                        <tr key={spec.label} className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}>
+                          <td className="px-5 py-4 text-sm font-semibold text-foreground">{spec.label}</td>
+                          <td className="px-5 py-4 text-sm text-foreground-secondary">{spec.value}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -260,9 +236,9 @@ const RentalDetail = () => {
               </div>
 
               {/* CTA */}
-              <Button asChild variant="whatsapp" size="lg" className="mt-8 w-full">
+              <Button asChild variant="whatsapp" size="lg" className="mt-8 w-full btn-press group text-base">
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="mr-2 h-5 w-5" />
+                  <WhatsAppIcon className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   Request Rental on WhatsApp
                 </a>
               </Button>

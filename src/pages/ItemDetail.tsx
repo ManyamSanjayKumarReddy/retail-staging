@@ -2,11 +2,11 @@ import { useParams, Link } from "react-router-dom";
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react";
+import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star } from "lucide-react";
 
 const WHATSAPP_NUMBER = "1234567890";
 
-// Sample item data
 const itemsData: Record<string, {
   id: string;
   name: string;
@@ -61,7 +61,6 @@ const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [currentImage, setCurrentImage] = useState(0);
 
-  // Default item if not found
   const item = id && itemsData[id] ? itemsData[id] : {
     id: id || "1",
     name: "Product Name",
@@ -74,51 +73,53 @@ const ItemDetail = () => {
   const whatsappMessage = `Hello! I would like to order: ${item.name} - Price: ₹${item.price}`;
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % item.images.length);
-  };
-
-  const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + item.images.length) % item.images.length);
-  };
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % item.images.length);
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + item.images.length) % item.images.length);
 
   return (
     <Layout>
-      <section className="bg-background py-8 md:py-12">
+      <section className="bg-background py-10 md:py-16">
         <div className="container">
           {/* Back Button */}
           <Link
             to="/items"
-            className="mb-6 inline-flex items-center gap-2 text-sm text-foreground-secondary transition-colors hover:text-primary"
+            className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-foreground-secondary transition-all duration-300 hover:text-primary hover:-translate-x-1"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Items
           </Link>
 
-          <div className="grid gap-8 lg:grid-cols-2">
+          <div className="grid gap-10 lg:grid-cols-2">
             {/* Image Slider */}
-            <div className="relative">
-              <div className="aspect-square overflow-hidden rounded-xl bg-muted">
+            <div className="relative animate-fade-in">
+              <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
                 <img
                   src={item.images[currentImage]}
                   alt={item.name}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover transition-transform duration-500"
                 />
               </div>
+
+              {/* Discount Badge */}
+              {item.discountPercent && (
+                <span className="absolute left-4 top-4 rounded-xl bg-discount px-3 py-1.5 text-sm font-bold text-discount-foreground shadow-lg">
+                  {item.discountPercent}% OFF
+                </span>
+              )}
 
               {/* Navigation Arrows */}
               {item.images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-md backdrop-blur transition-colors hover:bg-background"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
                     aria-label="Previous image"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={nextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-2 shadow-md backdrop-blur transition-colors hover:bg-background"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
                     aria-label="Next image"
                   >
                     <ChevronRight className="h-5 w-5" />
@@ -133,8 +134,10 @@ const ItemDetail = () => {
                     <button
                       key={index}
                       onClick={() => setCurrentImage(index)}
-                      className={`h-2 w-2 rounded-full transition-colors ${
-                        index === currentImage ? "bg-primary" : "bg-background/80"
+                      className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                        index === currentImage 
+                          ? "bg-primary w-6" 
+                          : "bg-background/80 hover:bg-background"
                       }`}
                       aria-label={`Go to image ${index + 1}`}
                     />
@@ -144,41 +147,46 @@ const ItemDetail = () => {
             </div>
 
             {/* Product Info */}
-            <div>
-              <h1 className="text-2xl font-bold text-foreground md:text-3xl">
+            <div className="animate-slide-in-right">
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
                 {item.name}
               </h1>
 
               {/* Price */}
-              <div className="mt-4 flex items-center gap-3">
-                <span className="text-3xl font-bold text-foreground">
-                  ₹{item.price}
-                </span>
+              <div className="mt-5 flex items-center gap-3">
+                <span className="text-3xl font-bold text-primary">₹{item.price}</span>
                 {item.originalPrice && item.originalPrice > item.price && (
-                  <>
-                    <span className="text-lg text-muted-foreground line-through">
-                      ₹{item.originalPrice}
-                    </span>
-                    {item.discountPercent && (
-                      <span className="rounded-md bg-discount px-2 py-1 text-sm font-semibold text-discount-foreground">
-                        {item.discountPercent}% OFF
-                      </span>
-                    )}
-                  </>
+                  <span className="text-xl text-muted-foreground line-through">
+                    ₹{item.originalPrice}
+                  </span>
                 )}
               </div>
 
               {/* Description */}
-              <p className="mt-6 text-foreground-secondary leading-relaxed">
+              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">
                 {item.description}
               </p>
 
+              {/* Trust Badges */}
+              <div className="mt-8 flex flex-wrap gap-4">
+                {[
+                  { icon: Shield, label: "Genuine Product" },
+                  { icon: Truck, label: "Fast Delivery" },
+                  { icon: Star, label: "Top Rated" },
+                ].map(({ icon: Icon, label }) => (
+                  <div key={label} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
+                    <Icon className="h-4 w-4 text-primary" />
+                    <span className="text-foreground-secondary">{label}</span>
+                  </div>
+                ))}
+              </div>
+
               {/* Specifications */}
               <div className="mt-8">
-                <h3 className="mb-4 text-lg font-semibold text-foreground">
+                <h3 className="mb-4 text-lg font-bold text-foreground">
                   Specifications
                 </h3>
-                <div className="rounded-lg border border-border overflow-hidden">
+                <div className="rounded-xl border border-border overflow-hidden">
                   <table className="w-full">
                     <tbody>
                       {item.specifications.map((spec, index) => (
@@ -186,10 +194,10 @@ const ItemDetail = () => {
                           key={spec.label}
                           className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}
                         >
-                          <td className="px-4 py-3 text-sm font-medium text-foreground">
+                          <td className="px-5 py-4 text-sm font-semibold text-foreground">
                             {spec.label}
                           </td>
-                          <td className="px-4 py-3 text-sm text-foreground-secondary">
+                          <td className="px-5 py-4 text-sm text-foreground-secondary">
                             {spec.value}
                           </td>
                         </tr>
@@ -200,9 +208,9 @@ const ItemDetail = () => {
               </div>
 
               {/* CTA */}
-              <Button asChild variant="whatsapp" size="lg" className="mt-8 w-full">
+              <Button asChild variant="whatsapp" size="lg" className="mt-8 w-full btn-press group text-base">
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="mr-2 h-5 w-5" />
+                  <WhatsAppIcon className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                   Order on WhatsApp
                 </a>
               </Button>
