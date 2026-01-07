@@ -1,9 +1,8 @@
 import { Link } from "react-router-dom";
 import { ProductCard } from "../ProductCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 
-// Sample featured items data
 const featuredItems = [
   {
     id: "1",
@@ -41,17 +40,18 @@ const featuredItems = [
 
 export const FeaturedSection = () => {
   return (
-    <section className="bg-background py-16 md:py-24">
+    <section className="bg-background py-20 md:py-28">
       <div className="container">
         {/* Section Header */}
-        <div className="mb-12 text-center">
-          <span className="mb-2 inline-block text-sm font-medium uppercase tracking-wider text-primary">
+        <div className="mb-14 text-center">
+          <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary animate-fade-in">
+            <Sparkles className="h-4 w-4" />
             Featured Collection
           </span>
-          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+          <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl lg:text-5xl animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             Top Selling Products
           </h2>
-          <p className="mx-auto max-w-2xl text-foreground-secondary">
+          <p className="mx-auto max-w-2xl text-foreground-secondary text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
             Discover our most popular items. Premium quality products at
             unbeatable prices. Order via WhatsApp for same-day delivery.
           </p>
@@ -62,23 +62,20 @@ export const FeaturedSection = () => {
           {featuredItems.map((item, index) => (
             <div
               key={item.id}
-              className="animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="opacity-0 animate-fade-in-up"
+              style={{ animationDelay: `${0.1 + index * 0.1}s` }}
             >
-              <ProductCard
-                {...item}
-                detailPath={`/items/${item.id}`}
-              />
+              <ProductCard {...item} detailPath={`/items/${item.id}`} />
             </div>
           ))}
         </div>
 
         {/* View All Button */}
-        <div className="mt-12 text-center">
-          <Button asChild variant="outline" size="lg">
+        <div className="mt-14 text-center animate-fade-in" style={{ animationDelay: "0.5s" }}>
+          <Button asChild variant="outline" size="lg" className="group btn-press">
             <Link to="/items">
               View All Items
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </Button>
         </div>

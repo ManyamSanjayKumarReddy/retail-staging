@@ -2,134 +2,137 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    /* Retail Design System */
+    /* Modern Retail Design System */
     --background: 0 0% 100%;
-    --background-soft: 0 0% 98%;
-    --foreground: 0 0% 10%;
-    --foreground-secondary: 0 0% 33%;
+    --background-soft: 220 20% 97%;
+    --foreground: 220 20% 10%;
+    --foreground-secondary: 220 10% 40%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card-foreground: 220 20% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 220 20% 10%;
 
-    /* Amazon-inspired blue accent */
-    --primary: 210 100% 35%;
+    /* Modern Blue accent */
+    --primary: 217 91% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 220 20% 96%;
+    --secondary-foreground: 220 20% 10%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 20% 96%;
+    --muted-foreground: 220 10% 45%;
 
-    --accent: 210 100% 35%;
+    --accent: 217 91% 50%;
     --accent-foreground: 0 0% 100%;
 
     /* WhatsApp Green */
-    --whatsapp: 142 70% 49%;
+    --whatsapp: 142 70% 45%;
     --whatsapp-foreground: 0 0% 100%;
 
     /* Discount Red */
-    --discount: 4 90% 58%;
+    --discount: 0 84% 60%;
     --discount-foreground: 0 0% 100%;
 
     /* Success */
-    --success: 142 70% 49%;
+    --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;
-    --input: 0 0% 88%;
-    --ring: 210 100% 35%;
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 217 91% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 210 100% 35%;
+    --sidebar-background: 220 20% 97%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 217 91% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 20% 96%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 88%;
-    --sidebar-ring: 210 100% 35%;
+    --sidebar-accent: 220 20% 96%;
+    --sidebar-accent-foreground: 220 20% 10%;
+    --sidebar-border: 220 20% 90%;
+    --sidebar-ring: 217 91% 50%;
 
-    /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 35%) 0%, hsl(210 100% 25%) 100%);
-    --gradient-whatsapp: linear-gradient(135deg, hsl(142 70% 49%) 0%, hsl(142 70% 40%) 100%);
-    
-    /* Shadows */
-    --shadow-card: 0 2px 8px -2px hsla(0, 0%, 0%, 0.1);
-    --shadow-card-hover: 0 8px 24px -4px hsla(0, 0%, 0%, 0.15);
-    --shadow-button: 0 2px 4px hsla(210, 100%, 35%, 0.2);
+    /* Modern Shadows */
+    --shadow-sm: 0 1px 2px 0 hsla(220, 20%, 10%, 0.05);
+    --shadow-card: 0 4px 6px -1px hsla(220, 20%, 10%, 0.07), 0 2px 4px -2px hsla(220, 20%, 10%, 0.05);
+    --shadow-card-hover: 0 20px 25px -5px hsla(220, 20%, 10%, 0.1), 0 8px 10px -6px hsla(220, 20%, 10%, 0.05);
+    --shadow-button: 0 4px 14px 0 hsla(217, 91%, 50%, 0.25);
+    --shadow-whatsapp: 0 4px 14px 0 hsla(142, 70%, 45%, 0.35);
   }
 
   .dark {
-    --background: 0 0% 5%;
-    --background-soft: 0 0% 8%;
+    --background: 220 20% 5%;
+    --background-soft: 220 20% 8%;
     --foreground: 0 0% 98%;
-    --foreground-secondary: 0 0% 70%;
+    --foreground-secondary: 220 10% 65%;
 
-    --card: 0 0% 8%;
+    --card: 220 20% 8%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 8%;
+    --popover: 220 20% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 210 100% 50%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
+    --secondary: 220 20% 15%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 210 100% 50%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 100%;
 
-    --whatsapp: 142 70% 49%;
+    --whatsapp: 142 70% 45%;
     --whatsapp-foreground: 0 0% 100%;
 
-    --discount: 4 90% 58%;
+    --discount: 0 84% 60%;
     --discount-foreground: 0 0% 100%;
 
-    --success: 142 70% 49%;
+    --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 210 100% 50%;
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 217 91% 60%;
 
-    --sidebar-background: 0 0% 8%;
+    --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent: 220 20% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 210 100% 50%;
+    --sidebar-border: 220 20% 18%;
+    --sidebar-ring: 217 91% 60%;
 
-    --shadow-card: 0 2px 8px -2px hsla(0, 0%, 0%, 0.4);
-    --shadow-card-hover: 0 8px 24px -4px hsla(0, 0%, 0%, 0.5);
-    --shadow-button: 0 2px 4px hsla(210, 100%, 50%, 0.3);
+    --shadow-card: 0 4px 6px -1px hsla(0, 0%, 0%, 0.3);
+    --shadow-card-hover: 0 20px 25px -5px hsla(0, 0%, 0%, 0.4);
+    --shadow-button: 0 4px 14px 0 hsla(217, 91%, 60%, 0.3);
+    --shadow-whatsapp: 0 4px 14px 0 hsla(142, 70%, 45%, 0.4);
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
@@ -141,8 +144,54 @@
   }
 }
 
+@layer components {
+  /* Modern Glass Effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-lg border border-border/50;
+  }
+
+  /* Animated underline for links */
+  .link-underline {
+    @apply relative inline-block;
+  }
+  
+  .link-underline::after {
+    @apply content-[''] absolute w-full h-0.5 bottom-0 left-0 bg-primary origin-bottom-right transition-transform duration-300 scale-x-0;
+  }
+  
+  .link-underline:hover::after {
+    @apply origin-bottom-left scale-x-100;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 ease-out hover:shadow-card-hover hover:-translate-y-1;
+  }
+
+  /* Button press effect */
+  .btn-press {
+    @apply transition-transform duration-150 active:scale-[0.97];
+  }
+
+  /* Smooth image zoom */
+  .img-zoom {
+    @apply transition-transform duration-500 ease-out;
+  }
+  
+  .img-zoom:hover {
+    @apply scale-105;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Stagger animation delays */
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
+  .stagger-5 { animation-delay: 0.5s; }
 }

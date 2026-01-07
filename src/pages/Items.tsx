@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/ProductCard";
+import { Package } from "lucide-react";
 
-// Sample items data
 const items = [
   {
     id: "1",
@@ -72,14 +72,18 @@ const items = [
 const Items = () => {
   return (
     <Layout>
-      <section className="bg-background py-12 md:py-16">
+      <section className="bg-background py-14 md:py-20">
         <div className="container">
           {/* Page Header */}
-          <div className="mb-10 text-center">
-            <h1 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
+          <div className="mb-12 text-center">
+            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary animate-fade-in">
+              <Package className="h-4 w-4" />
+              Shop Now
+            </span>
+            <h1 className="mb-4 text-3xl font-bold text-foreground md:text-4xl lg:text-5xl animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               Our Products
             </h1>
-            <p className="mx-auto max-w-2xl text-foreground-secondary">
+            <p className="mx-auto max-w-2xl text-foreground-secondary text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
               Browse our complete collection of premium products. Order via
               WhatsApp for instant service and same-day delivery.
             </p>
@@ -90,8 +94,8 @@ const Items = () => {
             {items.map((item, index) => (
               <div
                 key={item.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 50}ms` }}
+                className="opacity-0 animate-fade-in-up"
+                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
               >
                 <ProductCard {...item} detailPath={`/items/${item.id}`} />
               </div>
