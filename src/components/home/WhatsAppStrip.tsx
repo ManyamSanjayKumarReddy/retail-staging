@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { ArrowRight } from "lucide-react";
 
-const WHATSAPP_NUMBER = "1234567890";
+const WHATSAPP_NUMBER = "7601003069";
 
 export const WhatsAppStrip = () => {
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
