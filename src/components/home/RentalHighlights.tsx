@@ -1,30 +1,12 @@
 import { Link } from "react-router-dom";
 import { ProductCard } from "../ProductCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Clock } from "lucide-react";
-
-const rentalItems = [
-  {
-    id: "1",
-    name: "Professional DSLR Camera Kit",
-    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop",
-    price: 999,
-  },
-  {
-    id: "2",
-    name: "4K Projector with Screen",
-    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&h=400&fit=crop",
-    price: 1499,
-  },
-  {
-    id: "3",
-    name: "DJ Sound System Complete",
-    image: "https://images.unsplash.com/photo-1571327073757-71d13c24de30?w=400&h=400&fit=crop",
-    price: 2499,
-  },
-];
+import { ArrowRight, Clock, Loader2 } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
 
 export const RentalHighlights = () => {
+  const { products: rentals, loading } = useProducts({ isRental: true, isFeatured: true, limit: 3 });
+
   return (
     <section className="bg-background-soft py-20 md:py-28 relative overflow-hidden">
       {/* Background Decoration */}
@@ -46,18 +28,41 @@ export const RentalHighlights = () => {
           </p>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
         {/* Rentals Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rentalItems.map((item, index) => (
-            <div
-              key={item.id}
-              className="opacity-0 animate-fade-in-up"
-              style={{ animationDelay: `${0.1 + index * 0.1}s` }}
-            >
-              <ProductCard {...item} isRental detailPath={`/rentals/${item.id}`} />
-            </div>
-          ))}
-        </div>
+        {!loading && rentals.length > 0 && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {rentals.map((item, index) => (
+              <div
+                key={item.id}
+                className="opacity-0 animate-fade-in-up"
+                style={{ animationDelay: `${0.1 + index * 0.1}s` }}
+              >
+                <ProductCard
+                  id={item.id}
+                  name={item.name}
+                  image={item.images?.[0] || item.image || '/placeholder.svg'}
+                  price={item.price}
+                  isRental
+                  detailPath={`/rentals/${item.id}`}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && rentals.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No featured rental items available at the moment.</p>
+          </div>
+        )}
 
         {/* View All Button */}
         <div className="mt-14 text-center animate-fade-in" style={{ animationDelay: "0.5s" }}>

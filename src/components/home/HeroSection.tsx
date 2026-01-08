@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, CalendarDays, ArrowRight } from "lucide-react";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 export const HeroSection = () => {
+  const { settings } = useSiteSettings();
+
   return (
     <section className="relative min-h-[85vh] w-full overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/85">
       {/* Animated Background Elements */}
@@ -31,9 +34,9 @@ export const HeroSection = () => {
 
           {/* Headline */}
           <h1 className="mb-6 text-4xl font-extrabold leading-tight text-white md:text-5xl lg:text-6xl animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            Shop Smart,{" "}
+            {settings?.hero_title || "Shop Smart,"}{" "}
             <span className="relative inline-block">
-              Save More
+              {settings?.hero_subtitle || "Save More"}
               <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 12" fill="none">
                 <path 
                   d="M2 8C50 3 150 3 198 8" 
@@ -59,14 +62,14 @@ export const HeroSection = () => {
             <Button asChild variant="hero" size="lg" className="group btn-press min-w-[180px]">
               <Link to="/items">
                 <ShoppingBag className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:-translate-y-0.5" />
-                View Items
+                {settings?.hero_cta_primary || "View Items"}
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             </Button>
             <Button asChild variant="heroOutline" size="lg" className="group btn-press min-w-[180px]">
               <Link to="/rentals">
                 <CalendarDays className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:-translate-y-0.5" />
-                Rent Items
+                {settings?.hero_cta_secondary || "Rent Items"}
               </Link>
             </Button>
           </div>
