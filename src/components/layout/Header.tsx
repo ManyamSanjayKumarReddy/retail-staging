@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { cn } from "@/lib/utils";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -13,12 +14,11 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-const WHATSAPP_NUMBER = "1234567890";
-
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { settings } = useSiteSettings();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,8 +28,8 @@ export const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    "Hello! I'm interested in your products."
+  const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(
+    settings?.whatsapp_message || "Hello! I'm interested in your products."
   )}`;
 
   return (
@@ -47,8 +47,12 @@ export const Header = () => {
           to="/" 
           className="group flex items-center gap-1 transition-transform duration-300 hover:scale-105"
         >
-          <span className="text-xl font-bold text-primary transition-colors">Retail</span>
-          <span className="text-xl font-semibold text-foreground">Store</span>
+          <span className="text-xl font-bold text-primary transition-colors">
+            {settings?.site_name?.split(' ')[0] || 'Retail'}
+          </span>
+          <span className="text-xl font-semibold text-foreground">
+            {settings?.site_name?.split(' ').slice(1).join(' ') || 'Store'}
+          </span>
         </Link>
 
         {/* Desktop Navigation */}

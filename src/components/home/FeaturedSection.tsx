@@ -1,44 +1,12 @@
 import { Link } from "react-router-dom";
 import { ProductCard } from "../ProductCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles } from "lucide-react";
-
-const featuredItems = [
-  {
-    id: "1",
-    name: "Premium Wireless Headphones",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-    price: 2999,
-    originalPrice: 4999,
-    discountPercent: 40,
-  },
-  {
-    id: "2",
-    name: "Smart Watch Series Pro",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
-    price: 5499,
-    originalPrice: 7999,
-    discountPercent: 31,
-  },
-  {
-    id: "3",
-    name: "Portable Bluetooth Speaker",
-    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop",
-    price: 1499,
-    originalPrice: 2499,
-    discountPercent: 40,
-  },
-  {
-    id: "4",
-    name: "Designer Sunglasses",
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop",
-    price: 899,
-    originalPrice: 1499,
-    discountPercent: 40,
-  },
-];
+import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
 
 export const FeaturedSection = () => {
+  const { products, loading } = useProducts({ isRental: false, isFeatured: true, limit: 4 });
+
   return (
     <section className="bg-background py-20 md:py-28">
       <div className="container">
@@ -57,18 +25,42 @@ export const FeaturedSection = () => {
           </p>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
+
         {/* Products Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {featuredItems.map((item, index) => (
-            <div
-              key={item.id}
-              className="opacity-0 animate-fade-in-up"
-              style={{ animationDelay: `${0.1 + index * 0.1}s` }}
-            >
-              <ProductCard {...item} detailPath={`/items/${item.id}`} />
-            </div>
-          ))}
-        </div>
+        {!loading && products.length > 0 && (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {products.map((item, index) => (
+              <div
+                key={item.id}
+                className="opacity-0 animate-fade-in-up"
+                style={{ animationDelay: `${0.1 + index * 0.1}s` }}
+              >
+                <ProductCard
+                  id={item.id}
+                  name={item.name}
+                  image={item.images?.[0] || item.image || '/placeholder.svg'}
+                  price={item.price}
+                  originalPrice={item.original_price}
+                  discountPercent={item.original_price ? Math.round((1 - item.price / item.original_price) * 100) : undefined}
+                  detailPath={`/items/${item.id}`}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && products.length === 0 && (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No featured products available at the moment.</p>
+          </div>
+        )}
 
         {/* View All Button */}
         <div className="mt-14 text-center animate-fade-in" style={{ animationDelay: "0.5s" }}>

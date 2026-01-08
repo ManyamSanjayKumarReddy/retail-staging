@@ -1,12 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { ArrowRight } from "lucide-react";
-
-const WHATSAPP_NUMBER = "1234567890";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 export const WhatsAppStrip = () => {
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    "Hello! I'm interested in your products."
+  const { settings } = useSiteSettings();
+
+  const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(
+    settings?.whatsapp_message || "Hello! I'm interested in your products."
   )}`;
 
   return (
