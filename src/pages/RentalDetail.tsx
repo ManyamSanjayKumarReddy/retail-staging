@@ -5,67 +5,48 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon, Clock, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon, Clock, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-
-const WHATSAPP_NUMBER = "1234567890";
-
-const rentalsData: Record<string, {
-  id: string;
-  name: string;
-  images: string[];
-  price: number;
-  description: string;
-  specifications: { label: string; value: string }[];
-}> = {
-  "1": {
-    id: "1",
-    name: "Professional DSLR Camera Kit",
-    images: [
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
-      "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800",
-    ],
-    price: 999,
-    description: "Complete professional camera kit with body, multiple lenses, tripod, and accessories. Perfect for photography and videography projects.",
-    specifications: [
-      { label: "Camera", value: "Canon EOS R5" },
-      { label: "Lenses", value: "24-70mm, 70-200mm" },
-      { label: "Accessories", value: "Tripod, Flash, Memory Cards" },
-      { label: "Bag", value: "Included" },
-    ],
-  },
-  "2": {
-    id: "2",
-    name: "4K Projector with Screen",
-    images: [
-      "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800",
-    ],
-    price: 1499,
-    description: "High-quality 4K projector with a portable screen. Ideal for presentations, movie nights, and events.",
-    specifications: [
-      { label: "Resolution", value: "4K UHD" },
-      { label: "Brightness", value: "3000 Lumens" },
-      { label: "Screen Size", value: "120 inches" },
-      { label: "Connectivity", value: "HDMI, USB, Wireless" },
-    ],
-  },
-};
+import { useProduct } from "@/hooks/useProducts";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const RentalDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { product: item, loading, error } = useProduct(id);
+  const { settings } = useSiteSettings();
   const [currentImage, setCurrentImage] = useState(0);
   const [fromDate, setFromDate] = useState<Date>();
   const [toDate, setToDate] = useState<Date>();
 
-  const item = id && rentalsData[id] ? rentalsData[id] : {
-    id: id || "1",
-    name: "Rental Item",
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"],
-    price: 999,
-    description: "Rental item description goes here.",
-    specifications: [{ label: "Condition", value: "Excellent" }],
-  };
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !item) {
+    return (
+      <Layout>
+        <div className="container py-20 text-center">
+          <h1 className="text-2xl font-bold mb-4">Rental Item Not Found</h1>
+          <p className="text-muted-foreground mb-6">The rental item you're looking for doesn't exist.</p>
+          <Link to="/rentals">
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Rentals
+            </Button>
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
+
+  const images = item.images?.length ? item.images : [item.image || '/placeholder.svg'];
 
   const dateRange = fromDate && toDate 
     ? `From: ${format(fromDate, "PPP")} To: ${format(toDate, "PPP")}` 
@@ -74,10 +55,15 @@ const RentalDetail = () => {
     : "";
 
   const whatsappMessage = `Hello! I would like to rent: ${item.name} - Price: ₹${item.price}/day${dateRange ? ` ${dateRange}` : ""}`;
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const nextImage = () => setCurrentImage((prev) => (prev + 1) % item.images.length);
-  const prevImage = () => setCurrentImage((prev) => (prev - 1 + item.images.length) % item.images.length);
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
+
+  // Convert specifications object to array format
+  const specificationsArray = item.specifications 
+    ? Object.entries(item.specifications).map(([label, value]) => ({ label, value }))
+    : [];
 
   return (
     <Layout>
@@ -97,7 +83,7 @@ const RentalDetail = () => {
             <div className="relative animate-fade-in">
               <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
                 <img
-                  src={item.images[currentImage]}
+                  src={images[currentImage]}
                   alt={item.name}
                   className="h-full w-full object-cover transition-transform duration-500"
                 />
@@ -109,7 +95,7 @@ const RentalDetail = () => {
               </span>
 
               {/* Navigation */}
-              {item.images.length > 1 && (
+              {images.length > 1 && (
                 <>
                   <button
                     onClick={prevImage}
@@ -127,9 +113,9 @@ const RentalDetail = () => {
               )}
 
               {/* Dots */}
-              {item.images.length > 1 && (
+              {images.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                  {item.images.map((_, index) => (
+                  {images.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImage(index)}
@@ -216,24 +202,26 @@ const RentalDetail = () => {
               </div>
 
               {/* What's Included */}
-              <div className="mt-8">
-                <h3 className="mb-4 text-lg font-bold text-foreground flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-whatsapp" />
-                  What's Included
-                </h3>
-                <div className="rounded-xl border border-border overflow-hidden">
-                  <table className="w-full">
-                    <tbody>
-                      {item.specifications.map((spec, index) => (
-                        <tr key={spec.label} className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}>
-                          <td className="px-5 py-4 text-sm font-semibold text-foreground">{spec.label}</td>
-                          <td className="px-5 py-4 text-sm text-foreground-secondary">{spec.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {specificationsArray.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="mb-4 text-lg font-bold text-foreground flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-whatsapp" />
+                    What's Included
+                  </h3>
+                  <div className="rounded-xl border border-border overflow-hidden">
+                    <table className="w-full">
+                      <tbody>
+                        {specificationsArray.map((spec, index) => (
+                          <tr key={spec.label} className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}>
+                            <td className="px-5 py-4 text-sm font-semibold text-foreground">{spec.label}</td>
+                            <td className="px-5 py-4 text-sm text-foreground-secondary">{spec.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* CTA */}
               <Button asChild variant="whatsapp" size="lg" className="mt-8 w-full btn-press group text-base">
