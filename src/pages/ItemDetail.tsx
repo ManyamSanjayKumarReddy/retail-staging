@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2, Play } from "lucide-react";
 import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
@@ -51,10 +51,13 @@ const ItemDetail = () => {
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
 
-  // Convert specifications object to array format
+  const isVideo = (url: string) => url.match(/\.(mp4|webm|ogg|mov)$/i);
+
   const specificationsArray = item.specifications 
     ? Object.entries(item.specifications).map(([label, value]) => ({ label, value }))
     : [];
+
+  const content = (item as any).content;
 
   return (
     <Layout>
@@ -70,57 +73,74 @@ const ItemDetail = () => {
           </Link>
 
           <div className="grid gap-10 lg:grid-cols-2">
-            {/* Image Slider */}
-            <div className="relative animate-fade-in">
-              <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
-                <img
-                  src={images[currentImage]}
-                  alt={item.name}
-                  className="h-full w-full object-cover transition-transform duration-500"
-                />
+            {/* Image Gallery */}
+            <div className="space-y-4 animate-fade-in">
+              {/* Main Image/Video */}
+              <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
+                {isVideo(images[currentImage]) ? (
+                  <video
+                    src={images[currentImage]}
+                    className="h-full w-full object-cover"
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={images[currentImage]}
+                    alt={item.name}
+                    className="h-full w-full object-cover transition-transform duration-500"
+                  />
+                )}
+
+                {/* Discount Badge */}
+                {discountPercent && discountPercent > 0 && (
+                  <span className="absolute left-4 top-4 rounded-xl bg-discount px-3 py-1.5 text-sm font-bold text-discount-foreground shadow-lg">
+                    {discountPercent}% OFF
+                  </span>
+                )}
+
+                {/* Navigation Arrows */}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
               </div>
 
-              {/* Discount Badge */}
-              {discountPercent && discountPercent > 0 && (
-                <span className="absolute left-4 top-4 rounded-xl bg-discount px-3 py-1.5 text-sm font-bold text-discount-foreground shadow-lg">
-                  {discountPercent}% OFF
-                </span>
-              )}
-
-              {/* Navigation Arrows */}
+              {/* Thumbnails */}
               {images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
-                    aria-label="Previous image"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
-                    aria-label="Next image"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-
-              {/* Dots */}
-              {images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                  {images.map((_, index) => (
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {images.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImage(index)}
-                      className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
                         index === currentImage 
-                          ? "bg-primary w-6" 
-                          : "bg-background/80 hover:bg-background"
+                          ? "border-primary ring-2 ring-primary/30" 
+                          : "border-transparent hover:border-muted-foreground/30"
                       }`}
-                      aria-label={`Go to image ${index + 1}`}
-                    />
+                    >
+                      {isVideo(img) ? (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <Play className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <img src={img} alt={`${item.name} ${index + 1}`} className="w-full h-full object-cover" />
+                      )}
+                    </button>
                   ))}
                 </div>
               )}
@@ -198,6 +218,18 @@ const ItemDetail = () => {
               </Button>
             </div>
           </div>
+
+          {/* Detailed Content Section */}
+          {content && (
+            <div className="mt-16 animate-fade-in">
+              <h2 className="text-2xl font-bold text-foreground mb-6">Product Details</h2>
+              <div className="prose prose-lg max-w-none text-foreground-secondary bg-muted/30 rounded-2xl p-6 md:p-8">
+                <div className="whitespace-pre-wrap leading-relaxed">
+                  {content}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </Layout>
