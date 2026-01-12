@@ -24,6 +24,9 @@ export interface SiteSettings {
   contact_email: string;
   contact_phone: string;
   contact_address: string;
+  contact_page_title?: string;
+  contact_page_subtitle?: string;
+  contact_form_title?: string;
   created_at: string;
   updated_at: string;
 }
