@@ -262,6 +262,10 @@ const Items = () => {
                       price={item.price}
                       originalPrice={item.original_price}
                       discountPercent={item.original_price && item.price ? Math.round((1 - parsePrice(item.price) / parsePrice(item.original_price)) * 100) : undefined}
+                      isFeatured={item.is_featured}
+                      isExpired={item.is_expired}
+                      isUnavailable={item.is_unavailable}
+                      isOnRequest={item.is_on_request}
                       detailPath={`/items/${item.id}`}
                     />
                   </div>

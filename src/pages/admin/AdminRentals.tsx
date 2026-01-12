@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
+import { ImageReorder } from '@/components/admin/ImageReorder';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Video, Star } from 'lucide-react';
@@ -38,6 +39,9 @@ const AdminRentals = () => {
     specifications: {} as Record<string, string>,
     is_featured: false,
     is_active: true,
+    is_expired: false,
+    is_unavailable: false,
+    is_on_request: false,
     content: '',
   });
 
@@ -82,7 +86,7 @@ const AdminRentals = () => {
       const productData = {
         name: formData.name,
         description: formData.description,
-        price: formData.price, // Store as text now
+        price: formData.price,
         image: formData.images[0] || formData.image,
         images: formData.images,
         category: formData.category,
@@ -90,6 +94,9 @@ const AdminRentals = () => {
         content: formData.content,
         is_featured: formData.is_featured,
         is_active: formData.is_active,
+        is_expired: formData.is_expired,
+        is_unavailable: formData.is_unavailable,
+        is_on_request: formData.is_on_request,
         is_rental: true,
         updated_at: new Date().toISOString(),
       };
@@ -137,6 +144,9 @@ const AdminRentals = () => {
       specifications: {},
       is_featured: false,
       is_active: true,
+      is_expired: false,
+      is_unavailable: false,
+      is_on_request: false,
       content: '',
     });
     setEditingItem(null);
@@ -154,6 +164,9 @@ const AdminRentals = () => {
       specifications: item.specifications || {},
       is_featured: item.is_featured,
       is_active: item.is_active,
+      is_expired: item.is_expired || false,
+      is_unavailable: item.is_unavailable || false,
+      is_on_request: item.is_on_request || false,
       content: item.content || '',
     });
     setDialogOpen(true);
@@ -201,6 +214,14 @@ const AdminRentals = () => {
     } finally {
       setUploadingMedia(false);
     }
+  };
+
+  const handleImageReorder = (newImages: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images: newImages,
+      image: newImages[0] || ''
+    }));
   };
 
   const removeMedia = (index: number) => {
@@ -320,34 +341,12 @@ const AdminRentals = () => {
                   </div>
                 )}
 
-                {formData.images.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3">
-                    {formData.images.map((url, index) => (
-                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border bg-secondary">
-                        {isVideo(url) ? (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Video className="w-8 h-8 text-muted-foreground" />
-                            <span className="absolute bottom-1 left-1 text-xs bg-black/60 text-white px-1 rounded">Video</span>
-                          </div>
-                        ) : (
-                          <img src={url} alt={`Media ${index + 1}`} className="w-full h-full object-cover" />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeMedia(index)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                        {index === 0 && (
-                          <span className="absolute bottom-1 right-1 text-xs bg-primary text-primary-foreground px-1 rounded">Main</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">First image/video will be used as the main rental image</p>
+                <ImageReorder
+                  images={formData.images}
+                  onReorder={handleImageReorder}
+                  onRemove={removeMedia}
+                  maxMedia={MAX_MEDIA}
+                />
               </div>
 
               {/* Specifications Section */}
@@ -381,14 +380,30 @@ const AdminRentals = () => {
                 )}
               </div>
 
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <Switch id="is_featured" checked={formData.is_featured} onCheckedChange={(c) => setFormData(p => ({ ...p, is_featured: c }))} />
-                  <Label htmlFor="is_featured">Featured</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Switch id="is_active" checked={formData.is_active} onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} />
-                  <Label htmlFor="is_active">Active</Label>
+              {/* Status Toggles */}
+              <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                <Label className="text-sm font-semibold">Rental Status</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch id="is_active" checked={formData.is_active} onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} />
+                    <Label htmlFor="is_active" className="text-sm">Active</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch id="is_featured" checked={formData.is_featured} onCheckedChange={(c) => setFormData(p => ({ ...p, is_featured: c }))} />
+                    <Label htmlFor="is_featured" className="text-sm text-amber-600">Featured</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch id="is_expired" checked={formData.is_expired} onCheckedChange={(c) => setFormData(p => ({ ...p, is_expired: c }))} />
+                    <Label htmlFor="is_expired" className="text-sm text-gray-500">Expired</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch id="is_unavailable" checked={formData.is_unavailable} onCheckedChange={(c) => setFormData(p => ({ ...p, is_unavailable: c }))} />
+                    <Label htmlFor="is_unavailable" className="text-sm text-red-500">Unavailable</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch id="is_on_request" checked={formData.is_on_request} onCheckedChange={(c) => setFormData(p => ({ ...p, is_on_request: c }))} />
+                    <Label htmlFor="is_on_request" className="text-sm text-blue-500">On Request</Label>
+                  </div>
                 </div>
               </div>
 
@@ -445,7 +460,7 @@ const AdminRentals = () => {
                 </div>
                 <CardContent className="p-4">
                   <h3 className="font-semibold truncate">{item.name}</h3>
-                  <span className="font-bold text-primary">₹{item.price}/day</span>
+                  <span className="font-bold text-primary">{item.price}/day</span>
                   <div className="flex gap-2 mt-4">
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit

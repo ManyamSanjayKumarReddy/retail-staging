@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Loader2 } from 'lucide-react';
+import { Save, Loader2, Type, Calendar } from 'lucide-react';
 import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+import { Switch } from '@/components/ui/switch';
 
 const AdminSettings = () => {
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,12 @@ const AdminSettings = () => {
     contact_email: '',
     contact_phone: '',
     contact_address: '',
+    items_page_cta_text: 'Order on WhatsApp',
+    rentals_page_cta_text: 'Rent on WhatsApp',
+    item_detail_cta_text: 'Order on WhatsApp',
+    rental_detail_cta_text: 'Request Rental on WhatsApp',
+    contact_submit_text: 'Submit Request',
+    rental_allow_past_dates: false,
   });
   const { toast } = useToast();
 
@@ -46,6 +53,12 @@ const AdminSettings = () => {
           contact_email: data.contact_email || '',
           contact_phone: data.contact_phone || '',
           contact_address: data.contact_address || '',
+          items_page_cta_text: data.items_page_cta_text || 'Order on WhatsApp',
+          rentals_page_cta_text: data.rentals_page_cta_text || 'Rent on WhatsApp',
+          item_detail_cta_text: data.item_detail_cta_text || 'Order on WhatsApp',
+          rental_detail_cta_text: data.rental_detail_cta_text || 'Request Rental on WhatsApp',
+          contact_submit_text: data.contact_submit_text || 'Submit Request',
+          rental_allow_past_dates: data.rental_allow_past_dates || false,
         });
       }
     } catch (error) {
@@ -203,6 +216,89 @@ const AdminSettings = () => {
               onChange={(e) => setSettings(p => ({ ...p, contact_address: e.target.value }))}
               placeholder="Your store address..."
               rows={2}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Button Text Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Type className="w-5 h-5" />
+            Button Text Settings
+          </CardTitle>
+          <CardDescription>Customize button labels across your site</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="items_page_cta_text">Items Page CTA</Label>
+              <Input
+                id="items_page_cta_text"
+                value={settings.items_page_cta_text}
+                onChange={(e) => setSettings(p => ({ ...p, items_page_cta_text: e.target.value }))}
+                placeholder="Order on WhatsApp"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rentals_page_cta_text">Rentals Page CTA</Label>
+              <Input
+                id="rentals_page_cta_text"
+                value={settings.rentals_page_cta_text}
+                onChange={(e) => setSettings(p => ({ ...p, rentals_page_cta_text: e.target.value }))}
+                placeholder="Rent on WhatsApp"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="item_detail_cta_text">Item Detail CTA</Label>
+              <Input
+                id="item_detail_cta_text"
+                value={settings.item_detail_cta_text}
+                onChange={(e) => setSettings(p => ({ ...p, item_detail_cta_text: e.target.value }))}
+                placeholder="Order on WhatsApp"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="rental_detail_cta_text">Rental Detail CTA</Label>
+              <Input
+                id="rental_detail_cta_text"
+                value={settings.rental_detail_cta_text}
+                onChange={(e) => setSettings(p => ({ ...p, rental_detail_cta_text: e.target.value }))}
+                placeholder="Request Rental on WhatsApp"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contact_submit_text">Contact Form Submit Button</Label>
+              <Input
+                id="contact_submit_text"
+                value={settings.contact_submit_text}
+                onChange={(e) => setSettings(p => ({ ...p, contact_submit_text: e.target.value }))}
+                placeholder="Submit Request"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Rental Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            Rental Settings
+          </CardTitle>
+          <CardDescription>Configure rental-specific options</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+            <div>
+              <p className="font-semibold">Allow Past Dates for Rentals</p>
+              <p className="text-sm text-muted-foreground">Enable customers to select dates before today</p>
+            </div>
+            <Switch
+              checked={settings.rental_allow_past_dates}
+              onCheckedChange={(c) => setSettings(p => ({ ...p, rental_allow_past_dates: c }))}
             />
           </div>
         </CardContent>

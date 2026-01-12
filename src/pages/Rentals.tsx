@@ -262,6 +262,10 @@ const Rentals = () => {
                       image={item.images?.[0] || item.image || "/placeholder.svg"}
                       price={item.price}
                       isRental
+                      isFeatured={item.is_featured}
+                      isExpired={item.is_expired}
+                      isUnavailable={item.is_unavailable}
+                      isOnRequest={item.is_on_request}
                       detailPath={`/rentals/${item.id}`}
                     />
                   </div>
