@@ -31,6 +31,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
+  content?: string;
   price: number;
   original_price?: number;
   image: string;
