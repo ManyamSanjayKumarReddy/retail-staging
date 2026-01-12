@@ -1,12 +1,64 @@
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/ProductCard";
+import { Pagination } from "@/components/Pagination";
 import { Clock, Loader2 } from "lucide-react";
-import { useProducts } from "@/hooks/useProducts";
-import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { supabase } from "@/lib/supabase";
+import { Product } from "@/types/database";
+
+const ITEMS_PER_PAGE = 10;
 
 const Rentals = () => {
-  const { products: rentals, loading, error } = useProducts({ isRental: true });
-  const { settings } = useSiteSettings();
+  const [rentals, setRentals] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    fetchRentals();
+  }, [currentPage]);
+
+  const fetchRentals = async () => {
+    setLoading(true);
+    try {
+      // Get total count
+      const { count } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("is_rental", true)
+        .eq("is_active", true);
+
+      setTotalCount(count || 0);
+
+      // Fetch paginated data
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data, error: fetchError } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_rental", true)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (fetchError) throw fetchError;
+      setRentals(data || []);
+    } catch (err) {
+      console.error("Error fetching rentals:", err);
+      setError("Failed to load rentals");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <Layout>
@@ -50,24 +102,34 @@ const Rentals = () => {
 
           {/* Rentals Grid */}
           {!loading && !error && rentals.length > 0 && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {rentals.map((item, index) => (
-                <div
-                  key={item.id}
-                  className="opacity-0 animate-fade-in-up"
-                  style={{ animationDelay: `${0.1 + index * 0.05}s` }}
-                >
-                <ProductCard
-                  id={item.id}
-                  name={item.name}
-                  image={item.images?.[0] || item.image || '/placeholder.svg'}
-                  price={item.price}
-                  isRental
-                    detailPath={`/rentals/${item.id}`}
-                  />
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {rentals.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="opacity-0 animate-fade-in-up"
+                    style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                  >
+                    <ProductCard
+                      id={item.id}
+                      name={item.name}
+                      image={item.images?.[0] || item.image || "/placeholder.svg"}
+                      price={item.price}
+                      isRental
+                      detailPath={`/rentals/${item.id}`}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalCount}
+                itemsPerPage={ITEMS_PER_PAGE}
+              />
+            </>
           )}
         </div>
       </section>
