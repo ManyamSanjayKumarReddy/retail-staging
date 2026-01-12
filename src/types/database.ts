@@ -8,6 +8,17 @@ export interface SiteSettings {
   hero_image: string;
   hero_cta_primary: string;
   hero_cta_secondary: string;
+  hero_tagline: string;
+  hero_description: string;
+  featured_title: string;
+  featured_subtitle: string;
+  featured_description: string;
+  rental_title: string;
+  rental_subtitle: string;
+  rental_description: string;
+  whatsapp_strip_title: string;
+  whatsapp_strip_description: string;
+  whatsapp_strip_button: string;
   footer_description: string;
   contact_email: string;
   contact_phone: string;
