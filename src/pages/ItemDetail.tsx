@@ -44,8 +44,9 @@ const ItemDetail = () => {
   const discountPercent = item.original_price 
     ? Math.round((1 - item.price / item.original_price) * 100) 
     : null;
+  const currency = settings?.currency_symbol || '₹';
 
-  const whatsappMessage = `Hello! I would like to order: ${item.name} - Price: ₹${item.price}`;
+  const whatsappMessage = `Hello! I would like to order: ${item.name} - Price: ${currency}${item.price}`;
   const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
@@ -154,10 +155,10 @@ const ItemDetail = () => {
 
               {/* Price */}
               <div className="mt-5 flex items-center gap-3">
-                <span className="text-3xl font-bold text-primary">₹{item.price}</span>
+                <span className="text-3xl font-bold text-primary">{currency}{item.price}</span>
                 {item.original_price && item.original_price > item.price && (
                   <span className="text-xl text-muted-foreground line-through">
-                    ₹{item.original_price}
+                    {currency}{item.original_price}
                   </span>
                 )}
               </div>
