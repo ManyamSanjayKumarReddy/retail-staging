@@ -35,7 +35,9 @@ export const Footer = () => {
                 { to: "/", label: "Home" },
                 { to: "/items", label: "Items" },
                 { to: "/rentals", label: "Rentals" },
+                { to: "/payment", label: "Payment" },
                 { to: "/contact", label: "Contact" },
+                { to: "/terms", label: "Terms & Conditions" },
               ].map((link) => (
                 <Link
                   key={link.to}
