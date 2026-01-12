@@ -9,10 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Pagination } from '@/components/Pagination';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Video } from 'lucide-react';
 import { Product } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
+const MAX_MEDIA = 4;
 
 const AdminItems = () => {
   const [items, setItems] = useState<Product[]>([]);
@@ -22,6 +23,7 @@ const AdminItems = () => {
   const [saving, setSaving] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -30,9 +32,12 @@ const AdminItems = () => {
     price: '',
     original_price: '',
     image: '',
+    images: [] as string[],
     category: '',
+    specifications: {} as Record<string, string>,
     is_featured: false,
     is_active: true,
+    content: '',
   });
 
   useEffect(() => {
@@ -42,7 +47,6 @@ const AdminItems = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      // Get total count
       const { count } = await supabase
         .from('products')
         .select('*', { count: 'exact', head: true })
@@ -50,7 +54,6 @@ const AdminItems = () => {
 
       setTotalCount(count || 0);
 
-      // Fetch paginated data
       const from = (currentPage - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
@@ -80,8 +83,10 @@ const AdminItems = () => {
         description: formData.description,
         price: parseFloat(formData.price),
         original_price: formData.original_price ? parseFloat(formData.original_price) : null,
-        image: formData.image,
+        image: formData.images[0] || formData.image,
+        images: formData.images,
         category: formData.category,
+        specifications: formData.specifications,
         is_featured: formData.is_featured,
         is_active: formData.is_active,
         is_rental: false,
@@ -132,9 +137,12 @@ const AdminItems = () => {
       price: '',
       original_price: '',
       image: '',
+      images: [],
       category: '',
+      specifications: {},
       is_featured: false,
       is_active: true,
+      content: '',
     });
     setEditingItem(null);
   };
@@ -147,31 +155,98 @@ const AdminItems = () => {
       price: item.price.toString(),
       original_price: item.original_price?.toString() || '',
       image: item.image || '',
+      images: item.images || [],
       category: item.category || '',
+      specifications: item.specifications || {},
       is_featured: item.is_featured,
       is_active: item.is_active,
+      content: (item as any).content || '',
     });
     setDialogOpen(true);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const currentCount = formData.images.length;
+    const remainingSlots = MAX_MEDIA - currentCount;
+    
+    if (remainingSlots <= 0) {
+      toast({ title: `Maximum ${MAX_MEDIA} media files allowed`, variant: 'destructive' });
+      return;
+    }
+
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    setUploadingMedia(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `product-${Date.now()}.${fileExt}`;
+      const uploadedUrls: string[] = [];
+      
+      for (const file of filesToUpload) {
+        const fileExt = file.name.split('.').pop();
+        const isVideo = file.type.startsWith('video/');
+        const fileName = `${isVideo ? 'video' : 'product'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage.from('images').upload(fileName, file);
-      if (uploadError) throw uploadError;
+        const { error: uploadError } = await supabase.storage.from('images').upload(fileName, file);
+        if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from('images').getPublicUrl(fileName);
-      setFormData(prev => ({ ...prev, image: data.publicUrl }));
-      toast({ title: 'Image uploaded!' });
+        const { data } = supabase.storage.from('images').getPublicUrl(fileName);
+        uploadedUrls.push(data.publicUrl);
+      }
+
+      setFormData(prev => ({ 
+        ...prev, 
+        images: [...prev.images, ...uploadedUrls],
+        image: prev.images.length === 0 ? uploadedUrls[0] : prev.image
+      }));
+      toast({ title: `${uploadedUrls.length} file(s) uploaded!` });
     } catch (error) {
       console.error('Upload error:', error);
       toast({ title: 'Upload failed', variant: 'destructive' });
+    } finally {
+      setUploadingMedia(false);
     }
+  };
+
+  const removeMedia = (index: number) => {
+    setFormData(prev => {
+      const newImages = prev.images.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        images: newImages,
+        image: newImages[0] || ''
+      };
+    });
+  };
+
+  const addSpecification = () => {
+    const key = prompt('Enter specification name (e.g., "Color", "Size"):');
+    if (key) {
+      setFormData(prev => ({
+        ...prev,
+        specifications: { ...prev.specifications, [key]: '' }
+      }));
+    }
+  };
+
+  const updateSpecification = (key: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: { ...prev.specifications, [key]: value }
+    }));
+  };
+
+  const removeSpecification = (key: string) => {
+    setFormData(prev => {
+      const newSpecs = { ...prev.specifications };
+      delete newSpecs[key];
+      return { ...prev, specifications: newSpecs };
+    });
+  };
+
+  const isVideo = (url: string) => {
+    return url.match(/\.(mp4|webm|ogg|mov)$/i);
   };
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -199,11 +274,11 @@ const AdminItems = () => {
           <DialogTrigger asChild>
             <Button><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Name *</Label>
@@ -216,8 +291,20 @@ const AdminItems = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea id="description" value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} rows={3} />
+                <Label htmlFor="description">Short Description</Label>
+                <Textarea id="description" value={formData.description} onChange={(e) => setFormData(p => ({ ...p, description: e.target.value }))} rows={2} placeholder="Brief product description..." />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="content">Detailed Content</Label>
+                <Textarea 
+                  id="content" 
+                  value={formData.content} 
+                  onChange={(e) => setFormData(p => ({ ...p, content: e.target.value }))} 
+                  rows={5} 
+                  placeholder="Detailed product information, features, usage instructions..."
+                />
+                <p className="text-xs text-muted-foreground">This will be displayed on the product detail page</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -231,11 +318,86 @@ const AdminItems = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Product Image</Label>
-                <Input type="file" accept="image/*" onChange={handleImageUpload} />
-                <Input placeholder="Or paste image URL..." value={formData.image} onChange={(e) => setFormData(p => ({ ...p, image: e.target.value }))} />
-                {formData.image && <img src={formData.image} alt="Preview" className="w-24 h-24 object-cover rounded mt-2" />}
+              {/* Media Upload Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Product Media (up to {MAX_MEDIA} images/videos)</Label>
+                  <span className="text-sm text-muted-foreground">{formData.images.length}/{MAX_MEDIA}</span>
+                </div>
+                
+                {formData.images.length < MAX_MEDIA && (
+                  <div className="flex items-center gap-4">
+                    <Input 
+                      type="file" 
+                      accept="image/*,video/*" 
+                      multiple
+                      onChange={handleMediaUpload}
+                      disabled={uploadingMedia}
+                      className="max-w-xs"
+                    />
+                    {uploadingMedia && <Loader2 className="w-4 h-4 animate-spin" />}
+                  </div>
+                )}
+
+                {formData.images.length > 0 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {formData.images.map((url, index) => (
+                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border bg-secondary">
+                        {isVideo(url) ? (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Video className="w-8 h-8 text-muted-foreground" />
+                            <span className="absolute bottom-1 left-1 text-xs bg-black/60 text-white px-1 rounded">Video</span>
+                          </div>
+                        ) : (
+                          <img src={url} alt={`Media ${index + 1}`} className="w-full h-full object-cover" />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeMedia(index)}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                        {index === 0 && (
+                          <span className="absolute bottom-1 right-1 text-xs bg-primary text-primary-foreground px-1 rounded">Main</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">First image/video will be used as the main product image</p>
+              </div>
+
+              {/* Specifications Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label>Specifications</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addSpecification}>
+                    <Plus className="w-3 h-3 mr-1" /> Add
+                  </Button>
+                </div>
+                
+                {Object.entries(formData.specifications).length > 0 ? (
+                  <div className="space-y-2">
+                    {Object.entries(formData.specifications).map(([key, value]) => (
+                      <div key={key} className="flex items-center gap-2">
+                        <span className="w-32 text-sm font-medium truncate">{key}:</span>
+                        <Input 
+                          value={value} 
+                          onChange={(e) => updateSpecification(key, e.target.value)}
+                          placeholder={`Enter ${key}`}
+                          className="flex-1"
+                        />
+                        <Button type="button" variant="ghost" size="sm" onClick={() => removeSpecification(key)}>
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No specifications added. Click "Add" to add product specs like Color, Size, etc.</p>
+                )}
               </div>
 
               <div className="flex items-center gap-6">
@@ -249,7 +411,7 @@ const AdminItems = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={saving}>
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -272,10 +434,12 @@ const AdminItems = () => {
             {items.map((item) => (
               <Card key={item.id} className="card-hover overflow-hidden">
                 <div className="aspect-square relative bg-secondary">
-                  {item.image ? (
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  {item.images?.[0] || item.image ? (
+                    <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      <Image className="w-12 h-12" />
+                    </div>
                   )}
                   {item.is_featured && (
                     <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs flex items-center gap-1">
@@ -284,6 +448,11 @@ const AdminItems = () => {
                   )}
                   {!item.is_active && (
                     <div className="absolute top-2 right-2 bg-muted text-muted-foreground px-2 py-1 rounded text-xs">Inactive</div>
+                  )}
+                  {item.images && item.images.length > 1 && (
+                    <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
+                      +{item.images.length - 1} more
+                    </div>
                   )}
                 </div>
                 <CardContent className="p-4">
