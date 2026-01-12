@@ -44,10 +44,10 @@ export interface Product {
   name: string;
   description: string;
   content?: string;
-  price: string | number; // Can be text with currency or number
+  price: string | number;
   original_price?: string | number;
-  discount_type?: 'percentage' | 'amount'; // Type of discount calculation
-  discount_value?: number; // The discount value (e.g., 10 for 10% or ₹10)
+  discount_type?: 'percentage' | 'amount';
+  discount_value?: number;
   image: string;
   images: string[];
   category: string;
@@ -55,6 +55,9 @@ export interface Product {
   is_featured: boolean;
   is_rental: boolean;
   is_active: boolean;
+  is_expired?: boolean;
+  is_unavailable?: boolean;
+  is_on_request?: boolean;
   created_at: string;
   updated_at: string;
 }

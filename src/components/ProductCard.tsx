@@ -12,6 +12,10 @@ interface ProductCardProps {
   originalPrice?: string | number;
   discountPercent?: number;
   isRental?: boolean;
+  isFeatured?: boolean;
+  isExpired?: boolean;
+  isUnavailable?: boolean;
+  isOnRequest?: boolean;
   detailPath: string;
 }
 
@@ -23,6 +27,10 @@ export const ProductCard = ({
   originalPrice,
   discountPercent,
   isRental = false,
+  isFeatured = false,
+  isExpired = false,
+  isUnavailable = false,
+  isOnRequest = false,
   detailPath,
 }: ProductCardProps) => {
   const { settings } = useSiteSettings();
@@ -48,15 +56,35 @@ export const ProductCard = ({
 
   return (
     <div className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-card card-hover">
-      {/* Badges */}
-      <div className="absolute left-3 top-3 z-10 flex flex-col gap-2">
+      {/* Status Badges */}
+      <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-16px)]">
+        {isFeatured && (
+          <span className="rounded bg-amber-500 px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-white shadow-sm">
+            Featured
+          </span>
+        )}
+        {isExpired && (
+          <span className="rounded bg-gray-500 px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-white shadow-sm">
+            Expired
+          </span>
+        )}
+        {isUnavailable && (
+          <span className="rounded bg-red-500 px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-white shadow-sm">
+            Unavailable
+          </span>
+        )}
+        {isOnRequest && (
+          <span className="rounded bg-blue-500 px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-white shadow-sm">
+            On Request
+          </span>
+        )}
         {discountPercent && discountPercent > 0 && (
-          <span className="rounded-lg bg-discount px-2.5 py-1 text-xs font-bold text-discount-foreground shadow-sm animate-scale-in">
+          <span className="rounded bg-discount px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-discount-foreground shadow-sm">
             {discountPercent}% OFF
           </span>
         )}
         {isRental && (
-          <span className="rounded-lg bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm animate-scale-in">
+          <span className="rounded bg-primary px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-primary-foreground shadow-sm">
             Rental
           </span>
         )}
