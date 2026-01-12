@@ -41,12 +41,27 @@ const ItemDetail = () => {
   }
 
   const images = item.images?.length ? item.images : [item.image || '/placeholder.svg'];
-  const discountPercent = item.original_price 
-    ? Math.round((1 - item.price / item.original_price) * 100) 
+  
+  const parsePrice = (p: string | number | undefined): number => {
+    if (p === undefined || p === null) return 0;
+    if (typeof p === 'number') return p;
+    return parseFloat(String(p).replace(/[^0-9.-]/g, '')) || 0;
+  };
+  
+  const priceNum = parsePrice(item.price);
+  const originalPriceNum = parsePrice(item.original_price);
+  const discountPercent = originalPriceNum > 0 && priceNum > 0
+    ? Math.round((1 - priceNum / originalPriceNum) * 100) 
     : null;
   const currency = settings?.currency_symbol || '₹';
+  
+  const formatPrice = (p: string | number | undefined): string => {
+    if (p === undefined || p === null) return '';
+    if (typeof p === 'string' && p.trim() !== '') return p;
+    return `${currency}${p}`;
+  };
 
-  const whatsappMessage = `Hello! I would like to order: ${item.name} - Price: ${currency}${item.price}`;
+  const whatsappMessage = `Hello! I would like to order: ${item.name} - Price: ${formatPrice(item.price)}`;
   const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
@@ -154,11 +169,11 @@ const ItemDetail = () => {
               </h1>
 
               {/* Price */}
-              <div className="mt-5 flex items-center gap-3">
-                <span className="text-3xl font-bold text-primary">{currency}{item.price}</span>
-                {item.original_price && item.original_price > item.price && (
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <span className="text-3xl font-bold text-primary">{formatPrice(item.price)}</span>
+                {originalPriceNum > priceNum && (
                   <span className="text-xl text-muted-foreground line-through">
-                    {currency}{item.original_price}
+                    {formatPrice(item.original_price)}
                   </span>
                 )}
               </div>

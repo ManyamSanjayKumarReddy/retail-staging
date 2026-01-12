@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/ProductCard";
 import { Pagination } from "@/components/Pagination";
-import { Package, Loader2, Search, Filter } from "lucide-react";
+import { Package, Loader2, Search, Filter, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Product } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ import {
 
 const ITEMS_PER_PAGE = 12;
 
+type SortOption = "newest" | "oldest" | "price-low" | "price-high" | "name-asc" | "name-desc";
+
 const Items = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -25,6 +27,7 @@ const Items = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   // Extract unique categories from products
   const categories = useMemo(() => {
@@ -56,7 +59,13 @@ const Items = () => {
     }
   };
 
-  // Filter products based on search and category
+  // Helper to parse price (handles both number and string with currency)
+  const parsePrice = (price: number | string): number => {
+    if (typeof price === 'number') return price;
+    return parseFloat(String(price).replace(/[^0-9.-]/g, '')) || 0;
+  };
+
+  // Filter and sort products
   const filteredProducts = useMemo(() => {
     let result = allProducts;
 
@@ -76,8 +85,28 @@ const Items = () => {
       result = result.filter((p) => p.category === selectedCategory);
     }
 
+    // Sort
+    result = [...result].sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "price-low":
+          return parsePrice(a.price) - parsePrice(b.price);
+        case "price-high":
+          return parsePrice(b.price) - parsePrice(a.price);
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        default:
+          return 0;
+      }
+    });
+
     return result;
-  }, [allProducts, searchQuery, selectedCategory]);
+  }, [allProducts, searchQuery, selectedCategory, sortBy]);
 
   // Paginated products
   const paginatedProducts = useMemo(() => {
@@ -96,11 +125,12 @@ const Items = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, sortBy]);
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
+    setSortBy("newest");
   };
 
   return (
@@ -122,8 +152,9 @@ const Items = () => {
           </div>
 
           {/* Search and Filter Bar */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            <div className="relative flex-1 max-w-md">
+          <div className="mb-8 flex flex-col gap-4 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            {/* Search Row */}
+            <div className="relative w-full max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search products..."
@@ -132,12 +163,14 @@ const Items = () => {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-3 items-center">
+            
+            {/* Filters Row */}
+            <div className="flex flex-wrap gap-3 items-center">
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Filter className="h-4 w-4 text-muted-foreground hidden sm:block" />
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="All Categories" />
+                  <SelectTrigger className="w-[140px] sm:w-[160px]">
+                    <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
@@ -149,9 +182,27 @@ const Items = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {(searchQuery || selectedCategory !== "all") && (
+              
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                <Select value={sortBy} onValueChange={(val) => setSortBy(val as SortOption)}>
+                  <SelectTrigger className="w-[140px] sm:w-[160px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                    <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                    <SelectItem value="name-desc">Name: Z to A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {(searchQuery || selectedCategory !== "all" || sortBy !== "newest") && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  Clear
+                  Clear All
                 </Button>
               )}
             </div>
@@ -210,7 +261,7 @@ const Items = () => {
                       image={item.images?.[0] || item.image || "/placeholder.svg"}
                       price={item.price}
                       originalPrice={item.original_price}
-                      discountPercent={item.original_price ? Math.round((1 - item.price / item.original_price) * 100) : undefined}
+                      discountPercent={item.original_price && item.price ? Math.round((1 - parsePrice(item.price) / parsePrice(item.original_price)) * 100) : undefined}
                       detailPath={`/items/${item.id}`}
                     />
                   </div>

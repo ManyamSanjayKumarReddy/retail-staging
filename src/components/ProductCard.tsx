@@ -8,8 +8,8 @@ interface ProductCardProps {
   id: string;
   name: string;
   image: string;
-  price: number;
-  originalPrice?: number;
+  price: string | number;
+  originalPrice?: string | number;
   discountPercent?: number;
   isRental?: boolean;
   detailPath: string;
@@ -27,10 +27,20 @@ export const ProductCard = ({
 }: ProductCardProps) => {
   const { settings } = useSiteSettings();
   const currency = settings?.currency_symbol || '₹';
+  
+  // Format price display - if it's a string already formatted, use as is; otherwise add currency
+  const formatPrice = (p: string | number | undefined): string => {
+    if (p === undefined || p === null) return '';
+    if (typeof p === 'string' && p.trim() !== '') return p;
+    return `${currency}${p}`;
+  };
+
+  const displayPrice = formatPrice(price);
+  const displayOriginalPrice = originalPrice ? formatPrice(originalPrice) : null;
 
   const whatsappMessage = isRental
     ? `Hello! I'm interested in renting: ${name}`
-    : `Hello! I would like to order: ${name} - Price: ${currency}${price}`;
+    : `Hello! I would like to order: ${name} - Price: ${displayPrice}`;
 
   const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(
     whatsappMessage
@@ -70,11 +80,11 @@ export const ProductCard = ({
         </Link>
 
         {/* Price */}
-        <div className="mt-2 flex items-center gap-2">
-          <span className="text-lg font-bold text-foreground">{currency}{price}</span>
-          {originalPrice && originalPrice > price && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-lg font-bold text-foreground">{displayPrice}</span>
+          {displayOriginalPrice && (
             <span className="text-sm text-muted-foreground line-through">
-              {currency}{originalPrice}
+              {displayOriginalPrice}
             </span>
           )}
           {isRental && (

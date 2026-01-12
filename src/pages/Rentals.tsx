@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/ProductCard";
 import { Pagination } from "@/components/Pagination";
-import { Clock, Loader2, Search, Filter } from "lucide-react";
+import { Clock, Loader2, Search, Filter, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Product } from "@/types/database";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,8 @@ import {
 
 const ITEMS_PER_PAGE = 12;
 
+type SortOption = "newest" | "oldest" | "price-low" | "price-high" | "name-asc" | "name-desc";
+
 const Rentals = () => {
   const [rentals, setRentals] = useState<Product[]>([]);
   const [allRentals, setAllRentals] = useState<Product[]>([]);
@@ -25,6 +27,7 @@ const Rentals = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   // Extract unique categories from rentals
   const categories = useMemo(() => {
@@ -56,7 +59,13 @@ const Rentals = () => {
     }
   };
 
-  // Filter rentals based on search and category
+  // Helper to parse price
+  const parsePrice = (price: number | string): number => {
+    if (typeof price === 'number') return price;
+    return parseFloat(String(price).replace(/[^0-9.-]/g, '')) || 0;
+  };
+
+  // Filter and sort rentals
   const filteredRentals = useMemo(() => {
     let result = allRentals;
 
@@ -76,8 +85,28 @@ const Rentals = () => {
       result = result.filter((p) => p.category === selectedCategory);
     }
 
+    // Sort
+    result = [...result].sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "price-low":
+          return parsePrice(a.price) - parsePrice(b.price);
+        case "price-high":
+          return parsePrice(b.price) - parsePrice(a.price);
+        case "name-asc":
+          return a.name.localeCompare(b.name);
+        case "name-desc":
+          return b.name.localeCompare(a.name);
+        default:
+          return 0;
+      }
+    });
+
     return result;
-  }, [allRentals, searchQuery, selectedCategory]);
+  }, [allRentals, searchQuery, selectedCategory, sortBy]);
 
   // Paginated rentals
   const paginatedRentals = useMemo(() => {
@@ -96,11 +125,12 @@ const Rentals = () => {
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, sortBy]);
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
+    setSortBy("newest");
   };
 
   return (
@@ -123,8 +153,9 @@ const Rentals = () => {
           </div>
 
           {/* Search and Filter Bar */}
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-            <div className="relative flex-1 max-w-md">
+          <div className="mb-8 flex flex-col gap-4 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            {/* Search Row */}
+            <div className="relative w-full max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="Search rentals..."
@@ -133,12 +164,14 @@ const Rentals = () => {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-3 items-center">
+            
+            {/* Filters Row */}
+            <div className="flex flex-wrap gap-3 items-center">
               <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
+                <Filter className="h-4 w-4 text-muted-foreground hidden sm:block" />
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="All Categories" />
+                  <SelectTrigger className="w-[140px] sm:w-[160px]">
+                    <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
@@ -150,9 +183,27 @@ const Rentals = () => {
                   </SelectContent>
                 </Select>
               </div>
-              {(searchQuery || selectedCategory !== "all") && (
+              
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                <Select value={sortBy} onValueChange={(val) => setSortBy(val as SortOption)}>
+                  <SelectTrigger className="w-[140px] sm:w-[160px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
+                    <SelectItem value="oldest">Oldest First</SelectItem>
+                    <SelectItem value="price-low">Price: Low to High</SelectItem>
+                    <SelectItem value="price-high">Price: High to Low</SelectItem>
+                    <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                    <SelectItem value="name-desc">Name: Z to A</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {(searchQuery || selectedCategory !== "all" || sortBy !== "newest") && (
                 <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  Clear
+                  Clear All
                 </Button>
               )}
             </div>

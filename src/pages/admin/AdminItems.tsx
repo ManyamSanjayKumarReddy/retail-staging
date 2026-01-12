@@ -83,8 +83,8 @@ const AdminItems = () => {
       const productData = {
         name: formData.name,
         description: formData.description,
-        price: parseFloat(formData.price),
-        original_price: formData.original_price ? parseFloat(formData.original_price) : null,
+        price: formData.price, // Store as text now
+        original_price: formData.original_price || null,
         image: formData.images[0] || formData.image,
         images: formData.images,
         category: formData.category,
@@ -307,14 +307,14 @@ const AdminItems = () => {
                 <p className="text-xs text-muted-foreground">This will be displayed on the product detail page</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price *</Label>
-                  <Input id="price" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: e.target.value }))} required />
+                  <Label htmlFor="price">Price * (e.g., ₹999 or $49.99)</Label>
+                  <Input id="price" type="text" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: e.target.value }))} required placeholder="₹999" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="original_price">Original Price (for discount)</Label>
-                  <Input id="original_price" type="number" step="0.01" value={formData.original_price} onChange={(e) => setFormData(p => ({ ...p, original_price: e.target.value }))} />
+                  <Input id="original_price" type="text" value={formData.original_price} onChange={(e) => setFormData(p => ({ ...p, original_price: e.target.value }))} placeholder="₹1299" />
                 </div>
               </div>
 

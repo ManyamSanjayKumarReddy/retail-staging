@@ -33,8 +33,8 @@ export interface Product {
   name: string;
   description: string;
   content?: string;
-  price: number;
-  original_price?: number;
+  price: string | number; // Can be text with currency or number
+  original_price?: string | number;
   image: string;
   images: string[];
   category: string;
