@@ -48,6 +48,12 @@ const RentalDetail = () => {
 
   const images = item.images?.length ? item.images : [item.image || '/placeholder.svg'];
   const currency = settings?.currency_symbol || '₹';
+  
+  const formatPrice = (p: string | number | undefined): string => {
+    if (p === undefined || p === null) return '';
+    if (typeof p === 'string' && p.trim() !== '') return p;
+    return `${currency}${p}`;
+  };
 
   const dateRange = fromDate && toDate 
     ? `From: ${format(fromDate, "PPP")} To: ${format(toDate, "PPP")}` 
@@ -55,7 +61,7 @@ const RentalDetail = () => {
     ? `From: ${format(fromDate, "PPP")}` 
     : "";
 
-  const whatsappMessage = `Hello! I would like to rent: ${item.name} - Price: ${currency}${item.price}/day${dateRange ? ` ${dateRange}` : ""}`;
+  const whatsappMessage = `Hello! I would like to rent: ${item.name} - Price: ${formatPrice(item.price)}/day${dateRange ? ` ${dateRange}` : ""}`;
   const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
@@ -161,8 +167,8 @@ const RentalDetail = () => {
               </h1>
 
               {/* Price */}
-              <div className="mt-5 flex items-center gap-2">
-                <span className="text-3xl font-bold text-primary">{currency}{item.price}</span>
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <span className="text-3xl font-bold text-primary">{formatPrice(item.price)}</span>
                 <span className="text-lg text-muted-foreground">/day</span>
               </div>
 

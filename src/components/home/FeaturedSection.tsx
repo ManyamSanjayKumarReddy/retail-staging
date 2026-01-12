@@ -48,7 +48,7 @@ export const FeaturedSection = () => {
                   image={item.images?.[0] || item.image || '/placeholder.svg'}
                   price={item.price}
                   originalPrice={item.original_price}
-                  discountPercent={item.original_price ? Math.round((1 - item.price / item.original_price) * 100) : undefined}
+                  discountPercent={item.original_price && item.price ? Math.round((1 - Number(String(item.price).replace(/[^0-9.-]/g, '')) / Number(String(item.original_price).replace(/[^0-9.-]/g, ''))) * 100) : undefined}
                   detailPath={`/items/${item.id}`}
                 />
               </div>
