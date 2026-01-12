@@ -1,6 +1,7 @@
 export interface SiteSettings {
   id: string;
   site_name: string;
+  currency_symbol: string;
   whatsapp_number: string;
   whatsapp_message: string;
   hero_title: string;
@@ -23,6 +24,9 @@ export interface SiteSettings {
   contact_email: string;
   contact_phone: string;
   contact_address: string;
+  contact_page_title?: string;
+  contact_page_subtitle?: string;
+  contact_form_title?: string;
   created_at: string;
   updated_at: string;
 }
@@ -32,8 +36,8 @@ export interface Product {
   name: string;
   description: string;
   content?: string;
-  price: number;
-  original_price?: number;
+  price: string | number; // Can be text with currency or number
+  original_price?: string | number;
   image: string;
   images: string[];
   category: string;

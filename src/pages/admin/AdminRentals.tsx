@@ -82,7 +82,7 @@ const AdminRentals = () => {
       const productData = {
         name: formData.name,
         description: formData.description,
-        price: parseFloat(formData.price),
+        price: formData.price, // Store as text now
         image: formData.images[0] || formData.image,
         images: formData.images,
         category: formData.category,
@@ -295,8 +295,8 @@ const AdminRentals = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="price">Price per Day *</Label>
-                <Input id="price" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: e.target.value }))} required />
+                <Label htmlFor="price">Price per Day * (e.g., ₹99 or $9.99)</Label>
+                <Input id="price" type="text" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: e.target.value }))} required placeholder="₹99" />
               </div>
 
               {/* Media Upload Section */}

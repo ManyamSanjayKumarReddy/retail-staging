@@ -9,7 +9,11 @@ import {
   MessageSquare, 
   Settings,
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  FileText,
+  Wallet,
+  Inbox,
+  Phone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -19,9 +23,11 @@ const navItems = [
   { to: '/admin/home', icon: Home, label: 'Home Page' },
   { to: '/admin/items', icon: ShoppingBag, label: 'Items' },
   { to: '/admin/rentals', icon: Package, label: 'Rentals' },
-  { to: '/admin/payment', icon: CreditCard, label: 'Payment' },
-  { to: '/admin/contact', icon: MessageSquare, label: 'Contact' },
-  { to: '/admin/settings', icon: Settings, label: 'Settings' },
+  { to: '/admin/payment-settings', icon: Wallet, label: 'Payment Settings' },
+  { to: '/admin/terms', icon: FileText, label: 'Terms & Conditions' },
+  { to: '/admin/contact-settings', icon: Phone, label: 'Contact Settings' },
+  { to: '/admin/contact-submissions', icon: Inbox, label: 'Contact Requests' },
+  { to: '/admin/settings', icon: Settings, label: 'Site Settings' },
 ];
 
 const AdminSidebar = () => {

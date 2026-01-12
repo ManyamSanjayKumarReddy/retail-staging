@@ -14,6 +14,7 @@ const AdminSettings = () => {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
     site_name: '',
+    currency_symbol: '₹',
     whatsapp_number: '',
     whatsapp_message: '',
     footer_description: '',
@@ -38,6 +39,7 @@ const AdminSettings = () => {
       if (data) {
         setSettings({
           site_name: data.site_name || '',
+          currency_symbol: data.currency_symbol || '₹',
           whatsapp_number: data.whatsapp_number || '',
           whatsapp_message: data.whatsapp_message || '',
           footer_description: data.footer_description || '',
@@ -98,14 +100,26 @@ const AdminSettings = () => {
           <CardDescription>Basic store information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="site_name">Store Name</Label>
-            <Input
-              id="site_name"
-              value={settings.site_name}
-              onChange={(e) => setSettings(p => ({ ...p, site_name: e.target.value }))}
-              placeholder="My Store"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="site_name">Store Name</Label>
+              <Input
+                id="site_name"
+                value={settings.site_name}
+                onChange={(e) => setSettings(p => ({ ...p, site_name: e.target.value }))}
+                placeholder="My Store"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="currency_symbol">Currency Symbol</Label>
+              <Input
+                id="currency_symbol"
+                value={settings.currency_symbol}
+                onChange={(e) => setSettings(p => ({ ...p, currency_symbol: e.target.value }))}
+                placeholder="₹, $, €, £"
+              />
+              <p className="text-sm text-muted-foreground">Examples: ₹, $, €, £, ¥</p>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="footer_description">Footer Description</Label>
