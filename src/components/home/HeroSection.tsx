@@ -29,7 +29,7 @@ export const HeroSection = () => {
         <div className="mx-auto max-w-3xl text-center">
           {/* Tagline */}
           <span className="mb-6 inline-block rounded-full bg-white/15 px-5 py-2.5 text-sm font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm animate-fade-in border border-white/20">
-            ✨ Quality Products & Rentals
+            {settings?.hero_tagline || "✨ Quality Products & Rentals"}
           </span>
 
           {/* Headline */}
@@ -52,9 +52,7 @@ export const HeroSection = () => {
 
           {/* Subheadline */}
           <p className="mb-10 text-lg text-white/80 md:text-xl leading-relaxed animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            Browse our collection of premium products and rental items. 
-            <br className="hidden sm:block" />
-            Order directly via WhatsApp for the fastest service.
+            {settings?.hero_description || "Browse our collection of premium products and rental items. Order directly via WhatsApp for the fastest service."}
           </p>
 
           {/* CTAs */}

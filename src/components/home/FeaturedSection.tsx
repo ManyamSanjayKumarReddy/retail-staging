@@ -3,9 +3,11 @@ import { ProductCard } from "../ProductCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 export const FeaturedSection = () => {
   const { products, loading } = useProducts({ isRental: false, isFeatured: true, limit: 4 });
+  const { settings } = useSiteSettings();
 
   return (
     <section className="bg-background py-20 md:py-28">
@@ -14,14 +16,13 @@ export const FeaturedSection = () => {
         <div className="mb-14 text-center">
           <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary animate-fade-in">
             <Sparkles className="h-4 w-4" />
-            Featured Collection
+            {settings?.featured_subtitle || "Featured Collection"}
           </span>
           <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl lg:text-5xl animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            Top Selling Products
+            {settings?.featured_title || "Top Selling Products"}
           </h2>
           <p className="mx-auto max-w-2xl text-foreground-secondary text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            Discover our most popular items. Premium quality products at
-            unbeatable prices. Order now for same-day delivery.
+            {settings?.featured_description || "Discover our most popular items. Premium quality products at unbeatable prices. Order now for same-day delivery."}
           </p>
         </div>
 

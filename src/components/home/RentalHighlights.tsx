@@ -3,9 +3,11 @@ import { ProductCard } from "../ProductCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Clock, Loader2 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 export const RentalHighlights = () => {
   const { products: rentals, loading } = useProducts({ isRental: true, isFeatured: true, limit: 3 });
+  const { settings } = useSiteSettings();
 
   return (
     <section className="bg-background-soft py-20 md:py-28 relative overflow-hidden">
@@ -17,14 +19,13 @@ export const RentalHighlights = () => {
         <div className="mb-14 text-center">
           <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary animate-fade-in">
             <Clock className="h-4 w-4" />
-            Rental Services
+            {settings?.rental_subtitle || "Rental Services"}
           </span>
           <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl lg:text-5xl animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-            Available for Rent
+            {settings?.rental_title || "Available for Rent"}
           </h2>
           <p className="mx-auto max-w-2xl text-foreground-secondary text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            Need equipment for a short time? Rent premium items at affordable
-            daily rates. Perfect for events, projects, and more.
+            {settings?.rental_description || "Need equipment for a short time? Rent premium items at affordable daily rates. Perfect for events, projects, and more."}
           </p>
         </div>
 
