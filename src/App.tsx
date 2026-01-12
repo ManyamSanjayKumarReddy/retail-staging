@@ -12,6 +12,7 @@ import Rentals from "./pages/Rentals";
 import RentalDetail from "./pages/RentalDetail";
 import Payment from "./pages/Payment";
 import Contact from "./pages/Contact";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -20,6 +21,8 @@ import AdminHome from "./pages/admin/AdminHome";
 import AdminItems from "./pages/admin/AdminItems";
 import AdminRentals from "./pages/admin/AdminRentals";
 import AdminPayment from "./pages/admin/AdminPayment";
+import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
+import AdminTerms from "./pages/admin/AdminTerms";
 import AdminContact from "./pages/admin/AdminContact";
 import AdminSettings from "./pages/admin/AdminSettings";
 
@@ -41,6 +44,7 @@ const App = () => (
               <Route path="/rentals/:id" element={<RentalDetail />} />
               <Route path="/payment" element={<Payment />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/terms" element={<Terms />} />
               
               {/* Admin Routes */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -50,6 +54,8 @@ const App = () => (
                 <Route path="items" element={<AdminItems />} />
                 <Route path="rentals" element={<AdminRentals />} />
                 <Route path="payment" element={<AdminPayment />} />
+                <Route path="payment-settings" element={<AdminPaymentSettings />} />
+                <Route path="terms" element={<AdminTerms />} />
                 <Route path="contact" element={<AdminContact />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
