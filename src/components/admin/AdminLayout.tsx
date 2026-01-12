@@ -29,7 +29,7 @@ const AdminLayout = () => {
   return (
     <div className="min-h-screen flex bg-background-soft">
       <AdminSidebar />
-      <main className="flex-1 p-8 overflow-auto">
+      <main className="flex-1 p-8 overflow-auto h-screen">
         <Outlet />
       </main>
     </div>

@@ -34,7 +34,7 @@ const AdminSidebar = () => {
   };
 
   return (
-    <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col">
+    <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col sticky top-0 h-screen overflow-y-auto">
       {/* Logo */}
       <div className="p-6 border-b border-border">
         <h1 className="text-xl font-bold text-foreground">Admin Panel</h1>
