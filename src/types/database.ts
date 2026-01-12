@@ -1,6 +1,7 @@
 export interface SiteSettings {
   id: string;
   site_name: string;
+  currency_symbol: string;
   whatsapp_number: string;
   whatsapp_message: string;
   hero_title: string;

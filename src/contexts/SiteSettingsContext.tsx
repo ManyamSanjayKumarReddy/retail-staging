@@ -21,6 +21,7 @@ export const useSiteSettings = () => {
 const defaultSettings: SiteSettings = {
   id: '',
   site_name: 'ShopSmart',
+  currency_symbol: '₹',
   whatsapp_number: '',
   whatsapp_message: "Hello! I'm interested in your products.",
   hero_title: 'Shop Smart',
