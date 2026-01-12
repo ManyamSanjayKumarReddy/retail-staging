@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
+import { ImageReorder } from '@/components/admin/ImageReorder';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Video, Star } from 'lucide-react';
@@ -82,7 +83,7 @@ const AdminRentals = () => {
       const productData = {
         name: formData.name,
         description: formData.description,
-        price: formData.price, // Store as text now
+        price: formData.price,
         image: formData.images[0] || formData.image,
         images: formData.images,
         category: formData.category,
@@ -203,6 +204,14 @@ const AdminRentals = () => {
     }
   };
 
+  const handleImageReorder = (newImages: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images: newImages,
+      image: newImages[0] || ''
+    }));
+  };
+
   const removeMedia = (index: number) => {
     setFormData(prev => {
       const newImages = prev.images.filter((_, i) => i !== index);
@@ -320,34 +329,12 @@ const AdminRentals = () => {
                   </div>
                 )}
 
-                {formData.images.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3">
-                    {formData.images.map((url, index) => (
-                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border bg-secondary">
-                        {isVideo(url) ? (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Video className="w-8 h-8 text-muted-foreground" />
-                            <span className="absolute bottom-1 left-1 text-xs bg-black/60 text-white px-1 rounded">Video</span>
-                          </div>
-                        ) : (
-                          <img src={url} alt={`Media ${index + 1}`} className="w-full h-full object-cover" />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeMedia(index)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                        {index === 0 && (
-                          <span className="absolute bottom-1 right-1 text-xs bg-primary text-primary-foreground px-1 rounded">Main</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">First image/video will be used as the main rental image</p>
+                <ImageReorder
+                  images={formData.images}
+                  onReorder={handleImageReorder}
+                  onRemove={removeMedia}
+                  maxMedia={MAX_MEDIA}
+                />
               </div>
 
               {/* Specifications Section */}
@@ -445,7 +432,7 @@ const AdminRentals = () => {
                 </div>
                 <CardContent className="p-4">
                   <h3 className="font-semibold truncate">{item.name}</h3>
-                  <span className="font-bold text-primary">₹{item.price}/day</span>
+                  <span className="font-bold text-primary">{item.price}/day</span>
                   <div className="flex gap-2 mt-4">
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit

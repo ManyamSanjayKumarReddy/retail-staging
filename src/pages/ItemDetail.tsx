@@ -3,15 +3,17 @@ import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2, Play, ZoomIn } from "lucide-react";
 import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { product: item, loading, error } = useProduct(id);
   const { settings } = useSiteSettings();
   const [currentImage, setCurrentImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (loading) {
     return (
@@ -50,10 +52,18 @@ const ItemDetail = () => {
   
   const priceNum = parsePrice(item.price);
   const originalPriceNum = parsePrice(item.original_price);
-  const discountPercent = originalPriceNum > 0 && priceNum > 0
-    ? Math.round((1 - priceNum / originalPriceNum) * 100) 
-    : null;
   const currency = settings?.currency_symbol || '₹';
+
+  // Calculate discount based on discount_type
+  let discountDisplay: string | null = null;
+  if (item.discount_value && item.discount_value > 0) {
+    discountDisplay = item.discount_type === 'percentage' 
+      ? `${item.discount_value}% OFF` 
+      : `${currency}${item.discount_value} OFF`;
+  } else if (originalPriceNum > 0 && priceNum > 0 && originalPriceNum > priceNum) {
+    const percent = Math.round((1 - priceNum / originalPriceNum) * 100);
+    if (percent > 0) discountDisplay = `${percent}% OFF`;
+  }
   
   const formatPrice = (p: string | number | undefined): string => {
     if (p === undefined || p === null) return '';
@@ -74,12 +84,12 @@ const ItemDetail = () => {
     : [];
 
   const content = (item as any).content;
+  const ctaText = settings?.item_detail_cta_text || 'Order on WhatsApp';
 
   return (
     <Layout>
       <section className="bg-background py-10 md:py-16">
         <div className="container">
-          {/* Back Button */}
           <Link
             to="/items"
             className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-foreground-secondary transition-all duration-300 hover:text-primary hover:-translate-x-1"
@@ -91,68 +101,45 @@ const ItemDetail = () => {
           <div className="grid gap-10 lg:grid-cols-2">
             {/* Image Gallery */}
             <div className="space-y-4 animate-fade-in">
-              {/* Main Image/Video */}
-              <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
+              <div 
+                className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-card cursor-pointer group"
+                onClick={() => !isVideo(images[currentImage]) && setLightboxOpen(true)}
+              >
                 {isVideo(images[currentImage]) ? (
-                  <video
-                    src={images[currentImage]}
-                    className="h-full w-full object-cover"
-                    controls
-                    playsInline
-                  />
+                  <video src={images[currentImage]} className="h-full w-full object-cover" controls playsInline />
                 ) : (
-                  <img
-                    src={images[currentImage]}
-                    alt={item.name}
-                    className="h-full w-full object-cover transition-transform duration-500"
-                  />
+                  <>
+                    <img src={images[currentImage]} alt={item.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <ZoomIn className="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                    </div>
+                  </>
                 )}
 
-                {/* Discount Badge */}
-                {discountPercent && discountPercent > 0 && (
+                {discountDisplay && (
                   <span className="absolute left-4 top-4 rounded-xl bg-discount px-3 py-1.5 text-sm font-bold text-discount-foreground shadow-lg">
-                    {discountPercent}% OFF
+                    {discountDisplay}
                   </span>
                 )}
 
-                {/* Navigation Arrows */}
                 {images.length > 1 && (
                   <>
-                    <button
-                      onClick={prevImage}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
-                      aria-label="Previous image"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); prevImage(); }} className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110" aria-label="Previous image">
                       <ChevronLeft className="h-5 w-5" />
                     </button>
-                    <button
-                      onClick={nextImage}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
-                      aria-label="Next image"
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); nextImage(); }} className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110" aria-label="Next image">
                       <ChevronRight className="h-5 w-5" />
                     </button>
                   </>
                 )}
               </div>
 
-              {/* Thumbnails */}
               {images.length > 1 && (
                 <div className="flex gap-3 overflow-x-auto pb-2">
                   {images.map((img, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setCurrentImage(index)}
-                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                        index === currentImage 
-                          ? "border-primary ring-2 ring-primary/30" 
-                          : "border-transparent hover:border-muted-foreground/30"
-                      }`}
-                    >
+                    <button key={index} onClick={() => setCurrentImage(index)} className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${index === currentImage ? "border-primary ring-2 ring-primary/30" : "border-transparent hover:border-muted-foreground/30"}`}>
                       {isVideo(img) ? (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <Play className="w-6 h-6 text-muted-foreground" />
-                        </div>
+                        <div className="w-full h-full bg-muted flex items-center justify-center"><Play className="w-6 h-6 text-muted-foreground" /></div>
                       ) : (
                         <img src={img} alt={`${item.name} ${index + 1}`} className="w-full h-full object-cover" />
                       )}
@@ -164,90 +151,60 @@ const ItemDetail = () => {
 
             {/* Product Info */}
             <div className="animate-slide-in-right">
-              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">
-                {item.name}
-              </h1>
-
-              {/* Price */}
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">{item.name}</h1>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="text-3xl font-bold text-primary">{formatPrice(item.price)}</span>
                 {originalPriceNum > priceNum && (
-                  <span className="text-xl text-muted-foreground line-through">
-                    {formatPrice(item.original_price)}
-                  </span>
+                  <span className="text-xl text-muted-foreground line-through">{formatPrice(item.original_price)}</span>
                 )}
               </div>
+              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">{item.description}</p>
 
-              {/* Description */}
-              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">
-                {item.description}
-              </p>
-
-              {/* Trust Badges */}
               <div className="mt-8 flex flex-wrap gap-4">
-                {[
-                  { icon: Shield, label: "Genuine Product" },
-                  { icon: Truck, label: "Fast Delivery" },
-                  { icon: Star, label: "Top Rated" },
-                ].map(({ icon: Icon, label }) => (
+                {[{ icon: Shield, label: "Genuine Product" }, { icon: Truck, label: "Fast Delivery" }, { icon: Star, label: "Top Rated" }].map(({ icon: Icon, label }) => (
                   <div key={label} className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
-                    <Icon className="h-4 w-4 text-primary" />
-                    <span className="text-foreground-secondary">{label}</span>
+                    <Icon className="h-4 w-4 text-primary" /><span className="text-foreground-secondary">{label}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Specifications */}
               {specificationsArray.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="mb-4 text-lg font-bold text-foreground">
-                    Specifications
-                  </h3>
+                  <h3 className="mb-4 text-lg font-bold text-foreground">Specifications</h3>
                   <div className="rounded-xl border border-border overflow-hidden">
-                    <table className="w-full">
-                      <tbody>
-                        {specificationsArray.map((spec, index) => (
-                          <tr
-                            key={spec.label}
-                            className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}
-                          >
-                            <td className="px-5 py-4 text-sm font-semibold text-foreground">
-                              {spec.label}
-                            </td>
-                            <td className="px-5 py-4 text-sm text-foreground-secondary">
-                              {spec.value}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <table className="w-full"><tbody>
+                      {specificationsArray.map((spec, index) => (
+                        <tr key={spec.label} className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}>
+                          <td className="px-5 py-4 text-sm font-semibold text-foreground">{spec.label}</td>
+                          <td className="px-5 py-4 text-sm text-foreground-secondary">{spec.value}</td>
+                        </tr>
+                      ))}
+                    </tbody></table>
                   </div>
                 </div>
               )}
 
-              {/* CTA */}
               <Button asChild variant="whatsapp" size="lg" className="mt-8 w-full btn-press group text-base">
                 <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
                   <WhatsAppIcon className="mr-2 h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
-                  Order on WhatsApp
+                  {ctaText}
                 </a>
               </Button>
             </div>
           </div>
 
-          {/* Detailed Content Section */}
           {content && (
             <div className="mt-16 animate-fade-in">
               <h2 className="text-2xl font-bold text-foreground mb-6">Product Details</h2>
               <div className="prose prose-lg max-w-none text-foreground-secondary bg-muted/30 rounded-2xl p-6 md:p-8">
-                <div className="whitespace-pre-wrap leading-relaxed">
-                  {content}
-                </div>
+                <div className="whitespace-pre-wrap leading-relaxed">{content}</div>
               </div>
             </div>
           )}
         </div>
       </section>
+
+      <ImageLightbox images={images} initialIndex={currentImage} open={lightboxOpen} onOpenChange={setLightboxOpen} />
     </Layout>
   );
 };

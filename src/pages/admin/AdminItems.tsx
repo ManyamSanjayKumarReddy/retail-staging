@@ -6,11 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
+import { ImageReorder } from '@/components/admin/ImageReorder';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Video } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Video, Percent, DollarSign } from 'lucide-react';
 import { Product } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -33,6 +35,8 @@ const AdminItems = () => {
     description: '',
     price: '',
     original_price: '',
+    discount_type: 'percentage' as 'percentage' | 'amount',
+    discount_value: '',
     image: '',
     images: [] as string[],
     category: '',
@@ -83,8 +87,10 @@ const AdminItems = () => {
       const productData = {
         name: formData.name,
         description: formData.description,
-        price: formData.price, // Store as text now
+        price: formData.price,
         original_price: formData.original_price || null,
+        discount_type: formData.discount_value ? formData.discount_type : null,
+        discount_value: formData.discount_value ? parseFloat(formData.discount_value) : null,
         image: formData.images[0] || formData.image,
         images: formData.images,
         category: formData.category,
@@ -139,6 +145,8 @@ const AdminItems = () => {
       description: '',
       price: '',
       original_price: '',
+      discount_type: 'percentage',
+      discount_value: '',
       image: '',
       images: [],
       category: '',
@@ -157,6 +165,8 @@ const AdminItems = () => {
       description: item.description || '',
       price: item.price.toString(),
       original_price: item.original_price?.toString() || '',
+      discount_type: item.discount_type || 'percentage',
+      discount_value: item.discount_value?.toString() || '',
       image: item.image || '',
       images: item.images || [],
       category: item.category || '',
@@ -210,6 +220,14 @@ const AdminItems = () => {
     } finally {
       setUploadingMedia(false);
     }
+  };
+
+  const handleImageReorder = (newImages: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images: newImages,
+      image: newImages[0] || ''
+    }));
   };
 
   const removeMedia = (index: number) => {
@@ -313,8 +331,51 @@ const AdminItems = () => {
                   <Input id="price" type="text" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: e.target.value }))} required placeholder="₹999" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="original_price">Original Price (for discount)</Label>
+                  <Label htmlFor="original_price">Original Price (for strikethrough)</Label>
                   <Input id="original_price" type="text" value={formData.original_price} onChange={(e) => setFormData(p => ({ ...p, original_price: e.target.value }))} placeholder="₹1299" />
+                </div>
+              </div>
+
+              {/* Discount Section */}
+              <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                <Label className="text-sm font-semibold">Discount Badge (Optional)</Label>
+                <p className="text-xs text-muted-foreground">Set either percentage OR flat amount discount to display on product</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Discount Type</Label>
+                    <Select 
+                      value={formData.discount_type} 
+                      onValueChange={(v: 'percentage' | 'amount') => setFormData(p => ({ ...p, discount_type: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">
+                          <div className="flex items-center gap-2">
+                            <Percent className="w-4 h-4" /> Percentage (%)
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="amount">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4" /> Flat Amount (₹)
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="discount_value">
+                      Discount Value {formData.discount_type === 'percentage' ? '(%)' : '(₹)'}
+                    </Label>
+                    <Input 
+                      id="discount_value" 
+                      type="number" 
+                      value={formData.discount_value} 
+                      onChange={(e) => setFormData(p => ({ ...p, discount_value: e.target.value }))} 
+                      placeholder={formData.discount_type === 'percentage' ? 'e.g., 20' : 'e.g., 100'} 
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -339,34 +400,12 @@ const AdminItems = () => {
                   </div>
                 )}
 
-                {formData.images.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3">
-                    {formData.images.map((url, index) => (
-                      <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border bg-secondary">
-                        {isVideo(url) ? (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Video className="w-8 h-8 text-muted-foreground" />
-                            <span className="absolute bottom-1 left-1 text-xs bg-black/60 text-white px-1 rounded">Video</span>
-                          </div>
-                        ) : (
-                          <img src={url} alt={`Media ${index + 1}`} className="w-full h-full object-cover" />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeMedia(index)}
-                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                        {index === 0 && (
-                          <span className="absolute bottom-1 right-1 text-xs bg-primary text-primary-foreground px-1 rounded">Main</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">First image/video will be used as the main product image</p>
+                <ImageReorder
+                  images={formData.images}
+                  onReorder={handleImageReorder}
+                  onRemove={removeMedia}
+                  maxMedia={MAX_MEDIA}
+                />
               </div>
 
               {/* Specifications Section */}
@@ -453,8 +492,13 @@ const AdminItems = () => {
                       <Star className="w-3 h-3" /> Featured
                     </div>
                   )}
+                  {item.discount_value && (
+                    <div className="absolute top-2 right-2 bg-discount text-discount-foreground px-2 py-1 rounded text-xs font-bold">
+                      {item.discount_type === 'percentage' ? `${item.discount_value}% OFF` : `₹${item.discount_value} OFF`}
+                    </div>
+                  )}
                   {!item.is_active && (
-                    <div className="absolute top-2 right-2 bg-muted text-muted-foreground px-2 py-1 rounded text-xs">Inactive</div>
+                    <div className="absolute bottom-2 left-2 bg-muted text-muted-foreground px-2 py-1 rounded text-xs">Inactive</div>
                   )}
                   {item.images && item.images.length > 1 && (
                     <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
@@ -465,9 +509,9 @@ const AdminItems = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold truncate">{item.name}</h3>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold text-primary">₹{item.price}</span>
+                    <span className="font-bold text-primary">{item.price}</span>
                     {item.original_price && (
-                      <span className="text-sm text-muted-foreground line-through">₹{item.original_price}</span>
+                      <span className="text-sm text-muted-foreground line-through">{item.original_price}</span>
                     )}
                   </div>
                   <div className="flex gap-2 mt-4">

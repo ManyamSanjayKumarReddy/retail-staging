@@ -21,6 +21,12 @@ const AdminSettings = () => {
     contact_email: '',
     contact_phone: '',
     contact_address: '',
+    items_page_cta_text: 'Order on WhatsApp',
+    rentals_page_cta_text: 'Rent on WhatsApp',
+    item_detail_cta_text: 'Order on WhatsApp',
+    rental_detail_cta_text: 'Request Rental on WhatsApp',
+    contact_submit_text: 'Submit Request',
+    rental_allow_past_dates: false,
   });
   const { toast } = useToast();
 
