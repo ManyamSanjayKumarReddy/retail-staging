@@ -21,7 +21,7 @@ export const Footer = () => {
               </span>
             </Link>
             <p className="mt-4 text-foreground-secondary leading-relaxed">
-              {settings?.footer_description || 'Quality products and rental services. Order directly via WhatsApp for the fastest service.'}
+              {settings?.footer_description || 'Quality products and rental services. Order directly for the fastest service.'}
             </p>
           </div>
 
@@ -75,7 +75,7 @@ export const Footer = () => {
                   <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-whatsapp/10 transition-all duration-300 group-hover:bg-whatsapp group-hover:text-white">
                     <WhatsAppIcon className="h-4 w-4" />
                   </span>
-                  WhatsApp
+                  Chat
                 </a>
               )}
               {settings?.contact_email && (

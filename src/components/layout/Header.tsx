@@ -85,9 +85,9 @@ export const Header = () => {
             size="sm" 
             className="btn-press group"
           >
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <WhatsAppIcon className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-              Order Now
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+              <WhatsAppIcon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+              <span>Order Now</span>
             </a>
           </Button>
         </div>
@@ -139,9 +139,9 @@ export const Header = () => {
           ))}
           <div className="px-4 pt-2">
             <Button asChild variant="whatsapp" size="sm" className="w-full btn-press">
-              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                <WhatsAppIcon className="mr-2 h-4 w-4" />
-                Order Now
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+                <WhatsAppIcon className="h-4 w-4" />
+                <span>Order Now</span>
               </a>
             </Button>
           </div>

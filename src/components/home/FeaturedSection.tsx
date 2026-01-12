@@ -21,7 +21,7 @@ export const FeaturedSection = () => {
           </h2>
           <p className="mx-auto max-w-2xl text-foreground-secondary text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
             Discover our most popular items. Premium quality products at
-            unbeatable prices. Order via WhatsApp for same-day delivery.
+            unbeatable prices. Order now for same-day delivery.
           </p>
         </div>
 
