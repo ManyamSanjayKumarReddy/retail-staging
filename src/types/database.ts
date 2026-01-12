@@ -27,6 +27,14 @@ export interface SiteSettings {
   contact_page_title?: string;
   contact_page_subtitle?: string;
   contact_form_title?: string;
+  // Button text settings
+  items_page_cta_text?: string;
+  rentals_page_cta_text?: string;
+  item_detail_cta_text?: string;
+  rental_detail_cta_text?: string;
+  contact_submit_text?: string;
+  // Rental settings
+  rental_allow_past_dates?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -38,6 +46,8 @@ export interface Product {
   content?: string;
   price: string | number; // Can be text with currency or number
   original_price?: string | number;
+  discount_type?: 'percentage' | 'amount'; // Type of discount calculation
+  discount_value?: number; // The discount value (e.g., 10 for 10% or ₹10)
   image: string;
   images: string[];
   category: string;
