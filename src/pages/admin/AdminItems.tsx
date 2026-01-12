@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Pagination } from '@/components/Pagination';
+import SpecificationModal from '@/components/admin/SpecificationModal';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Video } from 'lucide-react';
@@ -24,6 +25,7 @@ const AdminItems = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [specModalOpen, setSpecModalOpen] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -87,6 +89,7 @@ const AdminItems = () => {
         images: formData.images,
         category: formData.category,
         specifications: formData.specifications,
+        content: formData.content,
         is_featured: formData.is_featured,
         is_active: formData.is_active,
         is_rental: false,
@@ -220,14 +223,11 @@ const AdminItems = () => {
     });
   };
 
-  const addSpecification = () => {
-    const key = prompt('Enter specification name (e.g., "Color", "Size"):');
-    if (key) {
-      setFormData(prev => ({
-        ...prev,
-        specifications: { ...prev.specifications, [key]: '' }
-      }));
-    }
+  const addSpecification = (key: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: { ...prev.specifications, [key]: value }
+    }));
   };
 
   const updateSpecification = (key: string, value: string) => {
@@ -373,7 +373,7 @@ const AdminItems = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <Label>Specifications</Label>
-                  <Button type="button" variant="outline" size="sm" onClick={addSpecification}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setSpecModalOpen(true)}>
                     <Plus className="w-3 h-3 mr-1" /> Add
                   </Button>
                 </div>
@@ -422,6 +422,13 @@ const AdminItems = () => {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Specification Modal */}
+      <SpecificationModal
+        open={specModalOpen}
+        onOpenChange={setSpecModalOpen}
+        onAdd={addSpecification}
+      />
 
       {/* Items Grid */}
       {loading ? (
