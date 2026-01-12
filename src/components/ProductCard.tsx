@@ -87,9 +87,9 @@ export const ProductCard = ({
           size="sm" 
           className="mt-3 w-full btn-press group/btn"
         >
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <WhatsAppIcon className="mr-2 h-4 w-4 transition-transform duration-300 group-hover/btn:scale-110" />
-            {isRental ? "Rent on WhatsApp" : "Order on WhatsApp"}
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+            <WhatsAppIcon className="h-4 w-4 transition-transform duration-300 group-hover/btn:scale-110" />
+            <span>{isRental ? "Rent Now" : "Order Now"}</span>
           </a>
         </Button>
       </div>

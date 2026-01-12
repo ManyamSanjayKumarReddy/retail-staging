@@ -35,7 +35,7 @@ export const WhatsAppStrip = () => {
         <div className="flex flex-col items-center justify-between gap-8 text-center md:flex-row md:text-left">
           <div className="animate-fade-in">
             <h2 className="text-2xl font-bold text-white md:text-3xl lg:text-4xl">
-              Order Directly on WhatsApp
+              Order Directly via Chat
             </h2>
             <p className="mt-3 text-white/90 text-lg max-w-xl">
               Get instant responses and the fastest delivery. Just one tap away!

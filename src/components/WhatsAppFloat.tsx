@@ -32,7 +32,7 @@ export const WhatsAppFloat = () => {
         </a>
       </TooltipTrigger>
       <TooltipContent side="left" className="bg-foreground text-background font-medium">
-        <p>Order via WhatsApp</p>
+        <p>Chat with us</p>
       </TooltipContent>
     </Tooltip>
   );
