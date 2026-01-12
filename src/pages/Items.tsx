@@ -1,75 +1,65 @@
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/ProductCard";
-import { Package } from "lucide-react";
+import { Pagination } from "@/components/Pagination";
+import { Package, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { Product } from "@/types/database";
 
-const items = [
-  {
-    id: "1",
-    name: "Premium Wireless Headphones",
-    image: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=400&fit=crop",
-    price: 2999,
-    originalPrice: 4999,
-    discountPercent: 40,
-  },
-  {
-    id: "2",
-    name: "Smart Watch Series Pro",
-    image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&h=400&fit=crop",
-    price: 5499,
-    originalPrice: 7999,
-    discountPercent: 31,
-  },
-  {
-    id: "3",
-    name: "Portable Bluetooth Speaker",
-    image: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=400&fit=crop",
-    price: 1499,
-    originalPrice: 2499,
-    discountPercent: 40,
-  },
-  {
-    id: "4",
-    name: "Designer Sunglasses",
-    image: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&h=400&fit=crop",
-    price: 899,
-    originalPrice: 1499,
-    discountPercent: 40,
-  },
-  {
-    id: "5",
-    name: "Leather Backpack Premium",
-    image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
-    price: 3499,
-    originalPrice: 5999,
-    discountPercent: 42,
-  },
-  {
-    id: "6",
-    name: "Wireless Earbuds Pro",
-    image: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&h=400&fit=crop",
-    price: 1999,
-    originalPrice: 3499,
-    discountPercent: 43,
-  },
-  {
-    id: "7",
-    name: "Minimalist Wristwatch",
-    image: "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400&h=400&fit=crop",
-    price: 4999,
-    originalPrice: 6999,
-    discountPercent: 29,
-  },
-  {
-    id: "8",
-    name: "Premium Sneakers Collection",
-    image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=400&fit=crop",
-    price: 3999,
-    originalPrice: 5499,
-    discountPercent: 27,
-  },
-];
+const ITEMS_PER_PAGE = 10;
 
 const Items = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage]);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      // Get total count
+      const { count } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("is_rental", false)
+        .eq("is_active", true);
+
+      setTotalCount(count || 0);
+
+      // Fetch paginated data
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data, error: fetchError } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_rental", false)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (fetchError) throw fetchError;
+      setProducts(data || []);
+    } catch (err) {
+      console.error("Error fetching products:", err);
+      setError("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <Layout>
       <section className="bg-background py-14 md:py-20">
@@ -84,23 +74,63 @@ const Items = () => {
               Our Products
             </h1>
             <p className="mx-auto max-w-2xl text-foreground-secondary text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              Browse our complete collection of premium products. Order via
-              WhatsApp for instant service and same-day delivery.
+              Browse our complete collection of premium products. Order now for instant service and same-day delivery.
             </p>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-20 text-destructive">
+              <p>Failed to load products. Please try again later.</p>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && products.length === 0 && (
+            <div className="text-center py-20 text-muted-foreground">
+              <p>No products available at the moment.</p>
+            </div>
+          )}
+
           {/* Products Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {items.map((item, index) => (
-              <div
-                key={item.id}
-                className="opacity-0 animate-fade-in-up"
-                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
-              >
-                <ProductCard {...item} detailPath={`/items/${item.id}`} />
+          {!loading && !error && products.length > 0 && (
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {products.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="opacity-0 animate-fade-in-up"
+                    style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                  >
+                    <ProductCard
+                      id={item.id}
+                      name={item.name}
+                      image={item.images?.[0] || item.image || "/placeholder.svg"}
+                      price={item.price}
+                      originalPrice={item.original_price}
+                      discountPercent={item.original_price ? Math.round((1 - item.price / item.original_price) * 100) : undefined}
+                      detailPath={`/items/${item.id}`}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalCount}
+                itemsPerPage={ITEMS_PER_PAGE}
+              />
+            </>
+          )}
         </div>
       </section>
     </Layout>

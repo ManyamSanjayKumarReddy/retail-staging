@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 interface ProductCardProps {
   id: string;
@@ -13,8 +14,6 @@ interface ProductCardProps {
   detailPath: string;
 }
 
-const WHATSAPP_NUMBER = "1234567890";
-
 export const ProductCard = ({
   id,
   name,
@@ -25,11 +24,13 @@ export const ProductCard = ({
   isRental = false,
   detailPath,
 }: ProductCardProps) => {
+  const { settings } = useSiteSettings();
+
   const whatsappMessage = isRental
     ? `Hello! I'm interested in renting: ${name}`
     : `Hello! I would like to order: ${name} - Price: ₹${price}`;
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+  const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(
     whatsappMessage
   )}`;
 
@@ -74,6 +75,9 @@ export const ProductCard = ({
               ₹{originalPrice}
             </span>
           )}
+          {isRental && (
+            <span className="text-sm text-muted-foreground">/day</span>
+          )}
         </div>
 
         {/* CTA */}
@@ -83,9 +87,9 @@ export const ProductCard = ({
           size="sm" 
           className="mt-3 w-full btn-press group/btn"
         >
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <WhatsAppIcon className="mr-2 h-4 w-4 transition-transform duration-300 group-hover/btn:scale-110" />
-            {isRental ? "Rent on WhatsApp" : "Order on WhatsApp"}
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2">
+            <WhatsAppIcon className="h-4 w-4 transition-transform duration-300 group-hover/btn:scale-110" />
+            <span>{isRental ? "Rent Now" : "Order Now"}</span>
           </a>
         </Button>
       </div>

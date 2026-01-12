@@ -1,12 +1,16 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-
-const WHATSAPP_NUMBER = "1234567890";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 export const WhatsAppFloat = () => {
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    "Hello! I'm interested in your products."
+  const { settings } = useSiteSettings();
+
+  const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(
+    settings?.whatsapp_message || "Hello! I'm interested in your products."
   )}`;
+
+  // Don't show if no WhatsApp number configured
+  if (!settings?.whatsapp_number) return null;
 
   return (
     <Tooltip>
@@ -28,7 +32,7 @@ export const WhatsAppFloat = () => {
         </a>
       </TooltipTrigger>
       <TooltipContent side="left" className="bg-foreground text-background font-medium">
-        <p>Order via WhatsApp</p>
+        <p>Chat with us</p>
       </TooltipContent>
     </Tooltip>
   );

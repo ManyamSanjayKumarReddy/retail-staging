@@ -5,67 +5,48 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon, Clock, CheckCircle2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon, Clock, CheckCircle2, Loader2, Play } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-
-const WHATSAPP_NUMBER = "1234567890";
-
-const rentalsData: Record<string, {
-  id: string;
-  name: string;
-  images: string[];
-  price: number;
-  description: string;
-  specifications: { label: string; value: string }[];
-}> = {
-  "1": {
-    id: "1",
-    name: "Professional DSLR Camera Kit",
-    images: [
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800",
-      "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800",
-    ],
-    price: 999,
-    description: "Complete professional camera kit with body, multiple lenses, tripod, and accessories. Perfect for photography and videography projects.",
-    specifications: [
-      { label: "Camera", value: "Canon EOS R5" },
-      { label: "Lenses", value: "24-70mm, 70-200mm" },
-      { label: "Accessories", value: "Tripod, Flash, Memory Cards" },
-      { label: "Bag", value: "Included" },
-    ],
-  },
-  "2": {
-    id: "2",
-    name: "4K Projector with Screen",
-    images: [
-      "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800",
-    ],
-    price: 1499,
-    description: "High-quality 4K projector with a portable screen. Ideal for presentations, movie nights, and events.",
-    specifications: [
-      { label: "Resolution", value: "4K UHD" },
-      { label: "Brightness", value: "3000 Lumens" },
-      { label: "Screen Size", value: "120 inches" },
-      { label: "Connectivity", value: "HDMI, USB, Wireless" },
-    ],
-  },
-};
+import { useProduct } from "@/hooks/useProducts";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 
 const RentalDetail = () => {
   const { id } = useParams<{ id: string }>();
+  const { product: item, loading, error } = useProduct(id);
+  const { settings } = useSiteSettings();
   const [currentImage, setCurrentImage] = useState(0);
   const [fromDate, setFromDate] = useState<Date>();
   const [toDate, setToDate] = useState<Date>();
 
-  const item = id && rentalsData[id] ? rentalsData[id] : {
-    id: id || "1",
-    name: "Rental Item",
-    images: ["https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800"],
-    price: 999,
-    description: "Rental item description goes here.",
-    specifications: [{ label: "Condition", value: "Excellent" }],
-  };
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-[50vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !item) {
+    return (
+      <Layout>
+        <div className="container py-20 text-center">
+          <h1 className="text-2xl font-bold mb-4">Rental Item Not Found</h1>
+          <p className="text-muted-foreground mb-6">The rental item you're looking for doesn't exist.</p>
+          <Link to="/rentals">
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Rentals
+            </Button>
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
+
+  const images = item.images?.length ? item.images : [item.image || '/placeholder.svg'];
 
   const dateRange = fromDate && toDate 
     ? `From: ${format(fromDate, "PPP")} To: ${format(toDate, "PPP")}` 
@@ -74,10 +55,18 @@ const RentalDetail = () => {
     : "";
 
   const whatsappMessage = `Hello! I would like to rent: ${item.name} - Price: ₹${item.price}/day${dateRange ? ` ${dateRange}` : ""}`;
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(whatsappMessage)}`;
 
-  const nextImage = () => setCurrentImage((prev) => (prev + 1) % item.images.length);
-  const prevImage = () => setCurrentImage((prev) => (prev - 1 + item.images.length) % item.images.length);
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
+
+  const isVideo = (url: string) => url.match(/\.(mp4|webm|ogg|mov)$/i);
+
+  const specificationsArray = item.specifications 
+    ? Object.entries(item.specifications).map(([label, value]) => ({ label, value }))
+    : [];
+
+  const content = (item as any).content;
 
   return (
     <Layout>
@@ -93,50 +82,72 @@ const RentalDetail = () => {
           </Link>
 
           <div className="grid gap-10 lg:grid-cols-2">
-            {/* Image Slider */}
-            <div className="relative animate-fade-in">
-              <div className="aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
-                <img
-                  src={item.images[currentImage]}
-                  alt={item.name}
-                  className="h-full w-full object-cover transition-transform duration-500"
-                />
+            {/* Image Gallery */}
+            <div className="space-y-4 animate-fade-in">
+              {/* Main Image/Video */}
+              <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted shadow-card">
+                {isVideo(images[currentImage]) ? (
+                  <video
+                    src={images[currentImage]}
+                    className="h-full w-full object-cover"
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={images[currentImage]}
+                    alt={item.name}
+                    className="h-full w-full object-cover transition-transform duration-500"
+                  />
+                )}
+
+                {/* Rental Badge */}
+                <span className="absolute left-4 top-4 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg">
+                  Available for Rent
+                </span>
+
+                {/* Navigation Arrows */}
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
               </div>
 
-              {/* Rental Badge */}
-              <span className="absolute left-4 top-4 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg">
-                Available for Rent
-              </span>
-
-              {/* Navigation */}
-              {item.images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-3 shadow-lg backdrop-blur transition-all duration-300 hover:bg-background hover:scale-110"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                </>
-              )}
-
-              {/* Dots */}
-              {item.images.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
-                  {item.images.map((_, index) => (
+              {/* Thumbnails */}
+              {images.length > 1 && (
+                <div className="flex gap-3 overflow-x-auto pb-2">
+                  {images.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImage(index)}
-                      className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
-                        index === currentImage ? "bg-primary w-6" : "bg-background/80"
+                      className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                        index === currentImage 
+                          ? "border-primary ring-2 ring-primary/30" 
+                          : "border-transparent hover:border-muted-foreground/30"
                       }`}
-                    />
+                    >
+                      {isVideo(img) ? (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <Play className="w-6 h-6 text-muted-foreground" />
+                        </div>
+                      ) : (
+                        <img src={img} alt={`${item.name} ${index + 1}`} className="w-full h-full object-cover" />
+                      )}
+                    </button>
                   ))}
                 </div>
               )}
@@ -216,24 +227,26 @@ const RentalDetail = () => {
               </div>
 
               {/* What's Included */}
-              <div className="mt-8">
-                <h3 className="mb-4 text-lg font-bold text-foreground flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-whatsapp" />
-                  What's Included
-                </h3>
-                <div className="rounded-xl border border-border overflow-hidden">
-                  <table className="w-full">
-                    <tbody>
-                      {item.specifications.map((spec, index) => (
-                        <tr key={spec.label} className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}>
-                          <td className="px-5 py-4 text-sm font-semibold text-foreground">{spec.label}</td>
-                          <td className="px-5 py-4 text-sm text-foreground-secondary">{spec.value}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {specificationsArray.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="mb-4 text-lg font-bold text-foreground flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-whatsapp" />
+                    What's Included
+                  </h3>
+                  <div className="rounded-xl border border-border overflow-hidden">
+                    <table className="w-full">
+                      <tbody>
+                        {specificationsArray.map((spec, index) => (
+                          <tr key={spec.label} className={index % 2 === 0 ? "bg-muted/50" : "bg-background"}>
+                            <td className="px-5 py-4 text-sm font-semibold text-foreground">{spec.label}</td>
+                            <td className="px-5 py-4 text-sm text-foreground-secondary">{spec.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* CTA */}
               <Button asChild variant="whatsapp" size="lg" className="mt-8 w-full btn-press group text-base">
@@ -244,6 +257,18 @@ const RentalDetail = () => {
               </Button>
             </div>
           </div>
+
+          {/* Detailed Content Section */}
+          {content && (
+            <div className="mt-16 animate-fade-in">
+              <h2 className="text-2xl font-bold text-foreground mb-6">Rental Details</h2>
+              <div className="prose prose-lg max-w-none text-foreground-secondary bg-muted/30 rounded-2xl p-6 md:p-8">
+                <div className="whitespace-pre-wrap leading-relaxed">
+                  {content}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </Layout>

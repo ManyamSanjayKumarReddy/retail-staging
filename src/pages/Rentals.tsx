@@ -1,47 +1,65 @@
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { ProductCard } from "@/components/ProductCard";
-import { Clock } from "lucide-react";
+import { Pagination } from "@/components/Pagination";
+import { Clock, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { Product } from "@/types/database";
 
-const rentalItems = [
-  {
-    id: "1",
-    name: "Professional DSLR Camera Kit",
-    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop",
-    price: 999,
-  },
-  {
-    id: "2",
-    name: "4K Projector with Screen",
-    image: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&h=400&fit=crop",
-    price: 1499,
-  },
-  {
-    id: "3",
-    name: "DJ Sound System Complete",
-    image: "https://images.unsplash.com/photo-1571327073757-71d13c24de30?w=400&h=400&fit=crop",
-    price: 2499,
-  },
-  {
-    id: "4",
-    name: "Event Lighting Package",
-    image: "https://images.unsplash.com/photo-1504509546545-e000b4a62425?w=400&h=400&fit=crop",
-    price: 1999,
-  },
-  {
-    id: "5",
-    name: "Drone with 4K Camera",
-    image: "https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=400&h=400&fit=crop",
-    price: 1299,
-  },
-  {
-    id: "6",
-    name: "Studio Microphone Set",
-    image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&h=400&fit=crop",
-    price: 799,
-  },
-];
+const ITEMS_PER_PAGE = 10;
 
 const Rentals = () => {
+  const [rentals, setRentals] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    fetchRentals();
+  }, [currentPage]);
+
+  const fetchRentals = async () => {
+    setLoading(true);
+    try {
+      // Get total count
+      const { count } = await supabase
+        .from("products")
+        .select("*", { count: "exact", head: true })
+        .eq("is_rental", true)
+        .eq("is_active", true);
+
+      setTotalCount(count || 0);
+
+      // Fetch paginated data
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data, error: fetchError } = await supabase
+        .from("products")
+        .select("*")
+        .eq("is_rental", true)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      if (fetchError) throw fetchError;
+      setRentals(data || []);
+    } catch (err) {
+      console.error("Error fetching rentals:", err);
+      setError("Failed to load rentals");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <Layout>
       <section className="bg-background py-14 md:py-20">
@@ -61,18 +79,58 @@ const Rentals = () => {
             </p>
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="text-center py-20 text-destructive">
+              <p>Failed to load rentals. Please try again later.</p>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && rentals.length === 0 && (
+            <div className="text-center py-20 text-muted-foreground">
+              <p>No rental items available at the moment.</p>
+            </div>
+          )}
+
           {/* Rentals Grid */}
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {rentalItems.map((item, index) => (
-              <div
-                key={item.id}
-                className="opacity-0 animate-fade-in-up"
-                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
-              >
-                <ProductCard {...item} isRental detailPath={`/rentals/${item.id}`} />
+          {!loading && !error && rentals.length > 0 && (
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {rentals.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="opacity-0 animate-fade-in-up"
+                    style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                  >
+                    <ProductCard
+                      id={item.id}
+                      name={item.name}
+                      image={item.images?.[0] || item.image || "/placeholder.svg"}
+                      price={item.price}
+                      isRental
+                      detailPath={`/rentals/${item.id}`}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={totalCount}
+                itemsPerPage={ITEMS_PER_PAGE}
+              />
+            </>
+          )}
         </div>
       </section>
     </Layout>
