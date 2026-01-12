@@ -6,10 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Pagination } from '@/components/Pagination';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Loader2, Package } from 'lucide-react';
 import { Product } from '@/types/database';
+
+const ITEMS_PER_PAGE = 10;
 
 const AdminRentals = () => {
   const [rentals, setRentals] = useState<Product[]>([]);
@@ -17,6 +20,8 @@ const AdminRentals = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Product | null>(null);
   const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -31,15 +36,29 @@ const AdminRentals = () => {
 
   useEffect(() => {
     fetchRentals();
-  }, []);
+  }, [currentPage]);
 
   const fetchRentals = async () => {
+    setLoading(true);
     try {
+      // Get total count
+      const { count } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_rental', true);
+
+      setTotalCount(count || 0);
+
+      // Fetch paginated data
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('is_rental', true)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
       setRentals(data || []);
@@ -133,7 +152,13 @@ const AdminRentals = () => {
     }
   };
 
-  if (loading) {
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  if (loading && rentals.length === 0) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
 
@@ -142,7 +167,7 @@ const AdminRentals = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Rentals</h1>
-          <p className="text-muted-foreground mt-1">Manage rental products</p>
+          <p className="text-muted-foreground mt-1">Manage rental products ({totalCount} items)</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
@@ -196,39 +221,56 @@ const AdminRentals = () => {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {rentals.map((item) => (
-          <Card key={item.id} className="card-hover overflow-hidden">
-            <div className="aspect-square relative bg-secondary">
-              {item.image ? (
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
-              )}
-              <div className="absolute top-2 left-2 bg-whatsapp text-whatsapp-foreground px-2 py-1 rounded text-xs flex items-center gap-1">
-                <Package className="w-3 h-3" /> Rental
-              </div>
-            </div>
-            <CardContent className="p-4">
-              <h3 className="font-semibold truncate">{item.name}</h3>
-              <span className="font-bold text-primary">₹{item.price}/day</span>
-              <div className="flex gap-2 mt-4">
-                <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
-                  <Pencil className="w-4 h-4 mr-1" /> Edit
-                </Button>
-                <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDelete(item.id)}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Rentals Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {rentals.map((item) => (
+              <Card key={item.id} className="card-hover overflow-hidden">
+                <div className="aspect-square relative bg-secondary">
+                  {item.image ? (
+                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Image</div>
+                  )}
+                  <div className="absolute top-2 left-2 bg-whatsapp text-whatsapp-foreground px-2 py-1 rounded text-xs flex items-center gap-1">
+                    <Package className="w-3 h-3" /> Rental
+                  </div>
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold truncate">{item.name}</h3>
+                  <span className="font-bold text-primary">₹{item.price}/day</span>
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
+                      <Pencil className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDelete(item.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-      {rentals.length === 0 && (
-        <Card className="p-12 text-center">
-          <p className="text-muted-foreground">No rentals yet. Click "Add Rental" to create your first rental product.</p>
-        </Card>
+          {rentals.length === 0 && (
+            <Card className="p-12 text-center">
+              <p className="text-muted-foreground">No rentals yet. Click "Add Rental" to create your first rental product.</p>
+            </Card>
+          )}
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={totalCount}
+            itemsPerPage={ITEMS_PER_PAGE}
+          />
+        </>
       )}
     </div>
   );
