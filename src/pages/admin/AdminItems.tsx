@@ -163,7 +163,7 @@ const AdminItems = () => {
       specifications: item.specifications || {},
       is_featured: item.is_featured,
       is_active: item.is_active,
-      content: (item as any).content || '',
+      content: item.content || '',
     });
     setDialogOpen(true);
   };
