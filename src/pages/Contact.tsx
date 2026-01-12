@@ -6,12 +6,25 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { Phone, Mail, MapPin, Send, CheckCircle2, MessageSquare } from "lucide-react";
+import { Phone, Mail, MapPin, Send, CheckCircle2, MessageSquare, Loader2 } from "lucide-react";
+import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
 
-const WHATSAPP_NUMBER = "1234567890";
+const contactSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  phone: z.string().trim().min(1, "Phone is required").max(20, "Phone must be less than 20 characters"),
+  email: z.string().trim().email("Invalid email").max(255).optional().or(z.literal("")),
+  requirement: z.string().trim().min(1, "Requirement is required").max(2000, "Requirement must be less than 2000 characters"),
+});
 
 const Contact = () => {
+  const { settings } = useSiteSettings();
+  const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -19,50 +32,93 @@ const Contact = () => {
     requirement: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitted(true);
+    setErrors({});
+
+    // Validate form data
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as string] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from('contact_submissions').insert([{
+        name: formData.name.trim(),
+        phone: formData.phone.trim(),
+        email: formData.email.trim() || null,
+        requirement: formData.requirement.trim(),
+        status: 'new'
+      }]);
+
+      if (error) throw error;
+      setIsSubmitted(true);
+      setFormData({ name: "", phone: "", email: "", requirement: "" });
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      toast({ title: 'Failed to submit. Please try again.', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
+
+  const pageTitle = (settings as any)?.contact_page_title || "Contact Us";
+  const pageSubtitle = (settings as any)?.contact_page_subtitle || "Have a custom requirement? Get in touch and we'll make it happen.";
+  const formTitle = (settings as any)?.contact_form_title || "Custom Order Request";
 
   const contactInfo = [
     {
       icon: Phone,
       label: "Phone",
-      value: "+1 234 567 890",
-      href: "tel:+1234567890",
+      value: settings?.contact_phone || "+1 234 567 890",
+      href: `tel:${settings?.contact_phone || "+1234567890"}`,
       color: "bg-blue-500/10 text-blue-600 group-hover:bg-blue-500 group-hover:text-white",
+      show: !!settings?.contact_phone,
     },
     {
       icon: WhatsAppIcon,
       label: "WhatsApp",
       value: "Chat with us",
-      href: `https://wa.me/${WHATSAPP_NUMBER}`,
+      href: `https://wa.me/${settings?.whatsapp_number || ''}`,
       color: "bg-whatsapp/10 text-whatsapp group-hover:bg-whatsapp group-hover:text-white",
+      show: !!settings?.whatsapp_number,
     },
     {
       icon: Mail,
       label: "Email",
-      value: "contact@retailstore.com",
-      href: "mailto:contact@retailstore.com",
+      value: settings?.contact_email || "contact@store.com",
+      href: `mailto:${settings?.contact_email || "contact@store.com"}`,
       color: "bg-purple-500/10 text-purple-600 group-hover:bg-purple-500 group-hover:text-white",
+      show: !!settings?.contact_email,
     },
     {
       icon: MapPin,
       label: "Address",
-      value: "123 Retail Street, City",
+      value: settings?.contact_address || "123 Retail Street, City",
       href: "#",
       color: "bg-orange-500/10 text-orange-600 group-hover:bg-orange-500 group-hover:text-white",
+      show: !!settings?.contact_address,
     },
-  ];
+  ].filter(item => item.show);
 
   return (
     <Layout>
@@ -76,10 +132,10 @@ const Contact = () => {
                 Get in Touch
               </span>
               <h1 className="mb-4 text-3xl font-bold text-foreground md:text-4xl lg:text-5xl animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-                Contact Us
+                {pageTitle}
               </h1>
-              <p className="text-foreground-secondary text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                Have a custom requirement? Get in touch and we'll make it happen.
+              <p className="text-muted-foreground text-lg animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+                {pageSubtitle}
               </p>
             </div>
 
@@ -122,7 +178,7 @@ const Contact = () => {
                         <h3 className="mb-2 text-2xl font-bold text-foreground">
                           Thank You!
                         </h3>
-                        <p className="text-foreground-secondary max-w-sm">
+                        <p className="text-muted-foreground max-w-sm">
                           We've received your request. Our team will contact you shortly.
                         </p>
                         <Button
@@ -138,7 +194,7 @@ const Contact = () => {
                         <div className="flex items-center gap-3 mb-2">
                           <Send className="h-5 w-5 text-primary" />
                           <h3 className="text-xl font-bold text-foreground">
-                            Custom Order Request
+                            {formTitle}
                           </h3>
                         </div>
 
@@ -152,9 +208,10 @@ const Contact = () => {
                               placeholder="Your name"
                               value={formData.name}
                               onChange={handleChange}
-                              required
-                              className="mt-2 h-12"
+                              className={`mt-2 h-12 ${errors.name ? 'border-destructive' : ''}`}
+                              maxLength={100}
                             />
+                            {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
                           </div>
                           <div>
                             <Label htmlFor="phone" className="text-sm font-semibold">Phone *</Label>
@@ -165,9 +222,10 @@ const Contact = () => {
                               placeholder="Your phone number"
                               value={formData.phone}
                               onChange={handleChange}
-                              required
-                              className="mt-2 h-12"
+                              className={`mt-2 h-12 ${errors.phone ? 'border-destructive' : ''}`}
+                              maxLength={20}
                             />
+                            {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone}</p>}
                           </div>
                         </div>
 
@@ -180,8 +238,10 @@ const Contact = () => {
                             placeholder="Your email address"
                             value={formData.email}
                             onChange={handleChange}
-                            className="mt-2 h-12"
+                            className={`mt-2 h-12 ${errors.email ? 'border-destructive' : ''}`}
+                            maxLength={255}
                           />
+                          {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
                         </div>
 
                         <div>
@@ -192,15 +252,20 @@ const Contact = () => {
                             placeholder="Describe your custom order requirement..."
                             value={formData.requirement}
                             onChange={handleChange}
-                            required
                             rows={5}
-                            className="mt-2 resize-none"
+                            className={`mt-2 resize-none ${errors.requirement ? 'border-destructive' : ''}`}
+                            maxLength={2000}
                           />
+                          {errors.requirement && <p className="text-sm text-destructive mt-1">{errors.requirement}</p>}
                         </div>
 
-                        <Button type="submit" size="lg" className="w-full btn-press group">
-                          <Send className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                          Submit Request
+                        <Button type="submit" size="lg" className="w-full btn-press group" disabled={isSubmitting}>
+                          {isSubmitting ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="mr-2 h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                          )}
+                          {isSubmitting ? 'Submitting...' : 'Submit Request'}
                         </Button>
                       </form>
                     )}

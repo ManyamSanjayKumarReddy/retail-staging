@@ -1,0 +1,229 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, Phone, Mail, Trash2, MessageSquare, Inbox, CheckCircle2, Clock } from 'lucide-react';
+import { ContactSubmission } from '@/types/database';
+import { WhatsAppIcon } from '@/components/icons/WhatsAppIcon';
+
+const AdminContactSubmissions = () => {
+  const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchSubmissions();
+  }, []);
+
+  const fetchSubmissions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contact_submissions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSubmissions(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateStatus = async (id: string, status: ContactSubmission['status']) => {
+    try {
+      const { error } = await supabase
+        .from('contact_submissions')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+      toast({ title: 'Status updated!' });
+      fetchSubmissions();
+    } catch (error) {
+      toast({ title: 'Error', variant: 'destructive' });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this submission?')) return;
+    try {
+      const { error } = await supabase.from('contact_submissions').delete().eq('id', id);
+      if (error) throw error;
+      toast({ title: 'Deleted!' });
+      fetchSubmissions();
+    } catch (error) {
+      toast({ title: 'Error', variant: 'destructive' });
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'new': return 'bg-primary';
+      case 'contacted': return 'bg-warning';
+      case 'completed': return 'bg-success';
+      default: return 'bg-muted';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'new': return <Inbox className="w-4 h-4" />;
+      case 'contacted': return <Clock className="w-4 h-4" />;
+      case 'completed': return <CheckCircle2 className="w-4 h-4" />;
+      default: return null;
+    }
+  };
+
+  const filteredSubmissions = submissions.filter(s => {
+    if (activeTab === 'all') return true;
+    return s.status === activeTab;
+  });
+
+  const counts = {
+    all: submissions.length,
+    new: submissions.filter(s => s.status === 'new').length,
+    contacted: submissions.filter(s => s.status === 'contacted').length,
+    completed: submissions.filter(s => s.status === 'completed').length,
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  }
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Contact Submissions</h1>
+        <p className="text-muted-foreground mt-1">Manage customer inquiries and custom orders ({submissions.length} total)</p>
+      </div>
+
+      {/* Status Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4 max-w-lg">
+          <TabsTrigger value="all" className="gap-2">
+            All <Badge variant="secondary" className="ml-1">{counts.all}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="new" className="gap-2">
+            New <Badge className="bg-primary ml-1">{counts.new}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="contacted" className="gap-2">
+            Contacted <Badge className="bg-warning ml-1">{counts.contacted}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="gap-2">
+            Done <Badge className="bg-success ml-1">{counts.completed}</Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab} className="mt-6">
+          <div className="space-y-4">
+            {filteredSubmissions.map((submission) => (
+              <Card key={submission.id} className={submission.status === 'new' ? 'border-primary/50 bg-primary/5' : ''}>
+                <CardContent className="p-6">
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="font-semibold text-lg">{submission.name}</h3>
+                        <Badge className={`${getStatusColor(submission.status)} flex items-center gap-1`}>
+                          {getStatusIcon(submission.status)}
+                          {submission.status}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <a 
+                          href={`tel:${submission.phone}`}
+                          className="flex items-center gap-1 hover:text-primary transition-colors"
+                        >
+                          <Phone className="w-4 h-4" /> {submission.phone}
+                        </a>
+                        {submission.email && (
+                          <a 
+                            href={`mailto:${submission.email}`}
+                            className="flex items-center gap-1 hover:text-primary transition-colors"
+                          >
+                            <Mail className="w-4 h-4" /> {submission.email}
+                          </a>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <MessageSquare className="w-4 h-4" /> 
+                          {new Date(submission.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="bg-secondary/50 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-muted-foreground mb-1">Requirement:</p>
+                        <p className="text-foreground whitespace-pre-wrap">{submission.requirement}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-row lg:flex-col gap-2 flex-wrap">
+                      <Select
+                        value={submission.status}
+                        onValueChange={(value) => updateStatus(submission.id, value as ContactSubmission['status'])}
+                      >
+                        <SelectTrigger className="w-32">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="new">New</SelectItem>
+                          <SelectItem value="contacted">Contacted</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => window.open(`https://wa.me/${submission.phone.replace(/\D/g, '')}`, '_blank')}
+                      >
+                        <WhatsAppIcon className="w-4 h-4" /> Chat
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={() => handleDelete(submission.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredSubmissions.length === 0 && (
+            <Card className="p-12 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <Inbox className="w-12 h-12 text-muted-foreground/50" />
+                <p className="text-muted-foreground">
+                  {activeTab === 'all' 
+                    ? 'No contact submissions yet.' 
+                    : `No ${activeTab} submissions.`}
+                </p>
+              </div>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+};
+
+export default AdminContactSubmissions;

@@ -20,10 +20,10 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminHome from "./pages/admin/AdminHome";
 import AdminItems from "./pages/admin/AdminItems";
 import AdminRentals from "./pages/admin/AdminRentals";
-import AdminPayment from "./pages/admin/AdminPayment";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 import AdminTerms from "./pages/admin/AdminTerms";
-import AdminContact from "./pages/admin/AdminContact";
+import AdminContactSettings from "./pages/admin/AdminContactSettings";
+import AdminContactSubmissions from "./pages/admin/AdminContactSubmissions";
 import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
@@ -53,10 +53,10 @@ const App = () => (
                 <Route path="home" element={<AdminHome />} />
                 <Route path="items" element={<AdminItems />} />
                 <Route path="rentals" element={<AdminRentals />} />
-                <Route path="payment" element={<AdminPayment />} />
                 <Route path="payment-settings" element={<AdminPaymentSettings />} />
                 <Route path="terms" element={<AdminTerms />} />
-                <Route path="contact" element={<AdminContact />} />
+                <Route path="contact-settings" element={<AdminContactSettings />} />
+                <Route path="contact-submissions" element={<AdminContactSubmissions />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
               
