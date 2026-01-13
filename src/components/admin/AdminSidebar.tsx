@@ -13,7 +13,8 @@ import {
   FileText,
   Wallet,
   Inbox,
-  Phone
+  Phone,
+  Tag
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const navItems = [
   { to: '/admin/home', icon: Home, label: 'Home Page' },
   { to: '/admin/items', icon: ShoppingBag, label: 'Items' },
   { to: '/admin/rentals', icon: Package, label: 'Rentals' },
+  { to: '/admin/status-tags', icon: Tag, label: 'Status Tags' },
   { to: '/admin/payment-settings', icon: Wallet, label: 'Payment Settings' },
   { to: '/admin/terms', icon: FileText, label: 'Terms & Conditions' },
   { to: '/admin/contact-settings', icon: Phone, label: 'Contact Settings' },

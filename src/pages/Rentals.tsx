@@ -4,7 +4,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Pagination } from "@/components/Pagination";
 import { Clock, Loader2, Search, Filter, ArrowUpDown } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { Product } from "@/types/database";
+import { Product, StatusTag } from "@/types/database";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,9 +19,13 @@ const ITEMS_PER_PAGE = 12;
 
 type SortOption = "newest" | "oldest" | "price-low" | "price-high" | "name-asc" | "name-desc";
 
+interface ProductWithTags extends Product {
+  status_tags?: StatusTag[];
+}
+
 const Rentals = () => {
-  const [rentals, setRentals] = useState<Product[]>([]);
-  const [allRentals, setAllRentals] = useState<Product[]>([]);
+  const [rentals, setRentals] = useState<ProductWithTags[]>([]);
+  const [allRentals, setAllRentals] = useState<ProductWithTags[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,7 +46,8 @@ const Rentals = () => {
   const fetchAllRentals = async () => {
     setLoading(true);
     try {
-      const { data, error: fetchError } = await supabase
+      // Fetch rentals
+      const { data: rentalsData, error: fetchError } = await supabase
         .from("products")
         .select("*")
         .eq("is_rental", true)
@@ -50,7 +55,33 @@ const Rentals = () => {
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
-      setAllRentals(data || []);
+
+      // Fetch all status tags
+      const { data: tagsData } = await supabase
+        .from("status_tags")
+        .select("*")
+        .eq("is_active", true);
+
+      // Fetch product-tag relationships
+      const { data: productTagsData } = await supabase
+        .from("product_status_tags")
+        .select("product_id, status_tag_id");
+
+      // Map tags to products
+      const rentalsWithTags = (rentalsData || []).map(product => {
+        const productTagIds = (productTagsData || [])
+          .filter(pt => pt.product_id === product.id)
+          .map(pt => pt.status_tag_id);
+        
+        const productTags = (tagsData || []).filter(tag => productTagIds.includes(tag.id));
+        
+        return {
+          ...product,
+          status_tags: productTags
+        };
+      });
+
+      setAllRentals(rentalsWithTags);
     } catch (err) {
       console.error("Error fetching rentals:", err);
       setError("Failed to load rentals");
@@ -262,10 +293,7 @@ const Rentals = () => {
                       image={item.images?.[0] || item.image || "/placeholder.svg"}
                       price={item.price}
                       isRental
-                      isFeatured={item.is_featured}
-                      isExpired={item.is_expired}
-                      isUnavailable={item.is_unavailable}
-                      isOnRequest={item.is_on_request}
+                      statusTags={item.status_tags}
                       detailPath={`/rentals/${item.id}`}
                     />
                   </div>

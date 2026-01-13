@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
@@ -7,6 +7,9 @@ import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2, Pla
 import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { StatusBadges } from "@/components/StatusBadges";
+import { supabase } from "@/lib/supabase";
+import { StatusTag } from "@/types/database";
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +17,30 @@ const ItemDetail = () => {
   const { settings } = useSiteSettings();
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [statusTags, setStatusTags] = useState<StatusTag[]>([]);
+
+  useEffect(() => {
+    if (id) {
+      fetchStatusTags();
+    }
+  }, [id]);
+
+  const fetchStatusTags = async () => {
+    const { data: tagLinks } = await supabase
+      .from('product_status_tags')
+      .select('status_tag_id')
+      .eq('product_id', id);
+    
+    if (tagLinks && tagLinks.length > 0) {
+      const tagIds = tagLinks.map(t => t.status_tag_id);
+      const { data: tags } = await supabase
+        .from('status_tags')
+        .select('*')
+        .in('id', tagIds)
+        .eq('is_active', true);
+      setStatusTags(tags || []);
+    }
+  };
 
   if (loading) {
     return (
