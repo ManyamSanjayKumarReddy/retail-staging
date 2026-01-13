@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
@@ -7,6 +7,9 @@ import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2, Pla
 import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { StatusBadges } from "@/components/StatusBadges";
+import { supabase } from "@/lib/supabase";
+import { StatusTag } from "@/types/database";
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +17,30 @@ const ItemDetail = () => {
   const { settings } = useSiteSettings();
   const [currentImage, setCurrentImage] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [statusTags, setStatusTags] = useState<StatusTag[]>([]);
+
+  useEffect(() => {
+    if (id) {
+      fetchStatusTags();
+    }
+  }, [id]);
+
+  const fetchStatusTags = async () => {
+    const { data: tagLinks } = await supabase
+      .from('product_status_tags')
+      .select('status_tag_id')
+      .eq('product_id', id);
+    
+    if (tagLinks && tagLinks.length > 0) {
+      const tagIds = tagLinks.map(t => t.status_tag_id);
+      const { data: tags } = await supabase
+        .from('status_tags')
+        .select('*')
+        .in('id', tagIds)
+        .eq('is_active', true);
+      setStatusTags(tags || []);
+    }
+  };
 
   if (loading) {
     return (
@@ -116,11 +143,15 @@ const ItemDetail = () => {
                   </>
                 )}
 
-                {discountDisplay && (
-                  <span className="absolute left-4 top-4 rounded-xl bg-discount px-3 py-1.5 text-sm font-bold text-discount-foreground shadow-lg">
-                    {discountDisplay}
-                  </span>
-                )}
+                {/* Status Tags & Discount Badge */}
+                <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                  {discountDisplay && (
+                    <span className="rounded-xl bg-discount px-3 py-1.5 text-sm font-bold text-discount-foreground shadow-lg">
+                      {discountDisplay}
+                    </span>
+                  )}
+                  <StatusBadges tags={statusTags} size="md" />
+                </div>
 
                 {images.length > 1 && (
                   <>
@@ -152,6 +183,14 @@ const ItemDetail = () => {
             {/* Product Info */}
             <div className="animate-slide-in-right">
               <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">{item.name}</h1>
+              
+              {/* Status Tags below title */}
+              {statusTags.length > 0 && (
+                <div className="mt-3">
+                  <StatusBadges tags={statusTags} size="md" />
+                </div>
+              )}
+              
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="text-3xl font-bold text-primary">{formatPrice(item.price)}</span>
                 {originalPriceNum > priceNum && (

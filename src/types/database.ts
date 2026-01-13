@@ -39,6 +39,21 @@ export interface SiteSettings {
   updated_at: string;
 }
 
+export interface StatusTag {
+  id: string;
+  name: string;
+  color: string;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ProductStatusTag {
+  id: string;
+  product_id: string;
+  status_tag_id: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -55,9 +70,7 @@ export interface Product {
   is_featured: boolean;
   is_rental: boolean;
   is_active: boolean;
-  is_expired?: boolean;
-  is_unavailable?: boolean;
-  is_on_request?: boolean;
+  status_tags?: StatusTag[];
   created_at: string;
   updated_at: string;
 }

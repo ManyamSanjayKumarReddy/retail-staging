@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
 import { ImageReorder } from '@/components/admin/ImageReorder';
+import { StatusTagSelector } from '@/components/admin/StatusTagSelector';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Video, Percent, DollarSign } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign } from 'lucide-react';
 import { Product } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -41,11 +42,8 @@ const AdminItems = () => {
     images: [] as string[],
     category: '',
     specifications: {} as Record<string, string>,
-    is_featured: false,
     is_active: true,
-    is_expired: false,
-    is_unavailable: false,
-    is_on_request: false,
+    status_tag_ids: [] as string[],
     content: '',
   });
 
@@ -82,6 +80,14 @@ const AdminItems = () => {
     }
   };
 
+  const fetchProductTags = async (productId: string): Promise<string[]> => {
+    const { data } = await supabase
+      .from('product_status_tags')
+      .select('status_tag_id')
+      .eq('product_id', productId);
+    return (data || []).map(d => d.status_tag_id);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -99,14 +105,13 @@ const AdminItems = () => {
         category: formData.category,
         specifications: formData.specifications,
         content: formData.content,
-        is_featured: formData.is_featured,
+        is_featured: false, // Deprecated, using status tags now
         is_active: formData.is_active,
-        is_expired: formData.is_expired,
-        is_unavailable: formData.is_unavailable,
-        is_on_request: formData.is_on_request,
         is_rental: false,
         updated_at: new Date().toISOString(),
       };
+
+      let productId = editingItem?.id;
 
       if (editingItem) {
         const { error } = await supabase
@@ -115,8 +120,24 @@ const AdminItems = () => {
           .eq('id', editingItem.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('products').insert([productData]);
+        const { data, error } = await supabase.from('products').insert([productData]).select().single();
         if (error) throw error;
+        productId = data.id;
+      }
+
+      // Update status tags
+      if (productId) {
+        // Delete existing tags
+        await supabase.from('product_status_tags').delete().eq('product_id', productId);
+        
+        // Insert new tags
+        if (formData.status_tag_ids.length > 0) {
+          const tagInserts = formData.status_tag_ids.map(tagId => ({
+            product_id: productId,
+            status_tag_id: tagId
+          }));
+          await supabase.from('product_status_tags').insert(tagInserts);
+        }
       }
 
       toast({ title: editingItem ? 'Item updated!' : 'Item created!' });
@@ -135,6 +156,9 @@ const AdminItems = () => {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
     try {
+      // Delete status tag associations first
+      await supabase.from('product_status_tags').delete().eq('product_id', id);
+      
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
       toast({ title: 'Item deleted!' });
@@ -157,18 +181,19 @@ const AdminItems = () => {
       images: [],
       category: '',
       specifications: {},
-      is_featured: false,
       is_active: true,
-      is_expired: false,
-      is_unavailable: false,
-      is_on_request: false,
+      status_tag_ids: [],
       content: '',
     });
     setEditingItem(null);
   };
 
-  const openEditDialog = (item: Product) => {
+  const openEditDialog = async (item: Product) => {
     setEditingItem(item);
+    
+    // Fetch existing tags for this product
+    const tagIds = await fetchProductTags(item.id);
+    
     setFormData({
       name: item.name,
       description: item.description || '',
@@ -180,11 +205,8 @@ const AdminItems = () => {
       images: item.images || [],
       category: item.category || '',
       specifications: item.specifications || {},
-      is_featured: item.is_featured,
       is_active: item.is_active,
-      is_expired: item.is_expired || false,
-      is_unavailable: item.is_unavailable || false,
-      is_on_request: item.is_on_request || false,
+      status_tag_ids: tagIds,
       content: item.content || '',
     });
     setDialogOpen(true);
@@ -273,10 +295,6 @@ const AdminItems = () => {
       delete newSpecs[key];
       return { ...prev, specifications: newSpecs };
     });
-  };
-
-  const isVideo = (url: string) => {
-    return url.match(/\.(mp4|webm|ogg|mov)$/i);
   };
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -451,30 +469,30 @@ const AdminItems = () => {
                 )}
               </div>
 
-              {/* Status Toggles */}
-              <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
-                <Label className="text-sm font-semibold">Item Status</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_active" checked={formData.is_active} onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} />
-                    <Label htmlFor="is_active" className="text-sm">Active</Label>
+              {/* Status Section */}
+              <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Visibility</Label>
+                  <div className="flex items-center gap-3">
+                    <Switch 
+                      id="is_active" 
+                      checked={formData.is_active} 
+                      onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} 
+                    />
+                    <Label htmlFor="is_active" className="text-sm">
+                      Active <span className="text-muted-foreground">(visible on public site)</span>
+                    </Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_featured" checked={formData.is_featured} onCheckedChange={(c) => setFormData(p => ({ ...p, is_featured: c }))} />
-                    <Label htmlFor="is_featured" className="text-sm text-amber-600">Featured</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_expired" checked={formData.is_expired} onCheckedChange={(c) => setFormData(p => ({ ...p, is_expired: c }))} />
-                    <Label htmlFor="is_expired" className="text-sm text-gray-500">Expired</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_unavailable" checked={formData.is_unavailable} onCheckedChange={(c) => setFormData(p => ({ ...p, is_unavailable: c }))} />
-                    <Label htmlFor="is_unavailable" className="text-sm text-red-500">Unavailable</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_on_request" checked={formData.is_on_request} onCheckedChange={(c) => setFormData(p => ({ ...p, is_on_request: c }))} />
-                    <Label htmlFor="is_on_request" className="text-sm text-blue-500">On Request</Label>
-                  </div>
+                </div>
+                
+                <div className="space-y-3 pt-3 border-t">
+                  <Label className="text-sm font-semibold">Status Tags</Label>
+                  <p className="text-xs text-muted-foreground">Select status badges to display on this item. Create new tags in the Status Tags section.</p>
+                  <StatusTagSelector
+                    productId={editingItem?.id}
+                    selectedTagIds={formData.status_tag_ids}
+                    onTagsChange={(ids) => setFormData(p => ({ ...p, status_tag_ids: ids }))}
+                  />
                 </div>
               </div>
 
