@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -11,6 +11,9 @@ import { cn } from "@/lib/utils";
 import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
+import { StatusBadges } from "@/components/StatusBadges";
+import { supabase } from "@/lib/supabase";
+import { StatusTag } from "@/types/database";
 
 const RentalDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +23,30 @@ const RentalDetail = () => {
   const [fromDate, setFromDate] = useState<Date>();
   const [toDate, setToDate] = useState<Date>();
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [statusTags, setStatusTags] = useState<StatusTag[]>([]);
+
+  useEffect(() => {
+    if (id) {
+      fetchStatusTags();
+    }
+  }, [id]);
+
+  const fetchStatusTags = async () => {
+    const { data: tagLinks } = await supabase
+      .from('product_status_tags')
+      .select('status_tag_id')
+      .eq('product_id', id);
+    
+    if (tagLinks && tagLinks.length > 0) {
+      const tagIds = tagLinks.map(t => t.status_tag_id);
+      const { data: tags } = await supabase
+        .from('status_tags')
+        .select('*')
+        .in('id', tagIds)
+        .eq('is_active', true);
+      setStatusTags(tags || []);
+    }
+  };
 
   if (loading) {
     return (
@@ -103,7 +130,11 @@ const RentalDetail = () => {
                   </>
                 )}
 
-                <span className="absolute left-4 top-4 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg">Available for Rent</span>
+                {/* Status Tags & Rental Badge */}
+                <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                  <span className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg">Available for Rent</span>
+                  <StatusBadges tags={statusTags} size="md" />
+                </div>
 
                 {images.length > 1 && (
                   <>
@@ -135,6 +166,14 @@ const RentalDetail = () => {
             {/* Rental Info */}
             <div className="animate-slide-in-right">
               <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">{item.name}</h1>
+              
+              {/* Status Tags below title */}
+              {statusTags.length > 0 && (
+                <div className="mt-3">
+                  <StatusBadges tags={statusTags} size="md" />
+                </div>
+              )}
+              
               <div className="mt-5 flex flex-wrap items-center gap-2">
                 <span className="text-3xl font-bold text-primary">{formatPrice(item.price)}</span>
                 <span className="text-lg text-muted-foreground">/day</span>
