@@ -9,9 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
 import { ImageReorder } from '@/components/admin/ImageReorder';
+import { StatusTagSelector } from '@/components/admin/StatusTagSelector';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Video, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Star } from 'lucide-react';
 import { Product } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -37,11 +38,8 @@ const AdminRentals = () => {
     images: [] as string[],
     category: '',
     specifications: {} as Record<string, string>,
-    is_featured: false,
     is_active: true,
-    is_expired: false,
-    is_unavailable: false,
-    is_on_request: false,
+    status_tag_ids: [] as string[],
     content: '',
   });
 
@@ -78,6 +76,14 @@ const AdminRentals = () => {
     }
   };
 
+  const fetchProductTags = async (productId: string): Promise<string[]> => {
+    const { data } = await supabase
+      .from('product_status_tags')
+      .select('status_tag_id')
+      .eq('product_id', productId);
+    return (data || []).map(d => d.status_tag_id);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -92,21 +98,36 @@ const AdminRentals = () => {
         category: formData.category,
         specifications: formData.specifications,
         content: formData.content,
-        is_featured: formData.is_featured,
+        is_featured: false, // Deprecated, using status tags now
         is_active: formData.is_active,
-        is_expired: formData.is_expired,
-        is_unavailable: formData.is_unavailable,
-        is_on_request: formData.is_on_request,
         is_rental: true,
         updated_at: new Date().toISOString(),
       };
+
+      let productId = editingItem?.id;
 
       if (editingItem) {
         const { error } = await supabase.from('products').update(productData).eq('id', editingItem.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from('products').insert([productData]);
+        const { data, error } = await supabase.from('products').insert([productData]).select().single();
         if (error) throw error;
+        productId = data.id;
+      }
+
+      // Update status tags
+      if (productId) {
+        // Delete existing tags
+        await supabase.from('product_status_tags').delete().eq('product_id', productId);
+        
+        // Insert new tags
+        if (formData.status_tag_ids.length > 0) {
+          const tagInserts = formData.status_tag_ids.map(tagId => ({
+            product_id: productId,
+            status_tag_id: tagId
+          }));
+          await supabase.from('product_status_tags').insert(tagInserts);
+        }
       }
 
       toast({ title: editingItem ? 'Rental updated!' : 'Rental created!' });
@@ -124,6 +145,9 @@ const AdminRentals = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure?')) return;
     try {
+      // Delete status tag associations first
+      await supabase.from('product_status_tags').delete().eq('product_id', id);
+      
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) throw error;
       toast({ title: 'Rental deleted!' });
@@ -142,18 +166,19 @@ const AdminRentals = () => {
       images: [],
       category: '',
       specifications: {},
-      is_featured: false,
       is_active: true,
-      is_expired: false,
-      is_unavailable: false,
-      is_on_request: false,
+      status_tag_ids: [],
       content: '',
     });
     setEditingItem(null);
   };
 
-  const openEditDialog = (item: Product) => {
+  const openEditDialog = async (item: Product) => {
     setEditingItem(item);
+    
+    // Fetch existing tags for this product
+    const tagIds = await fetchProductTags(item.id);
+    
     setFormData({
       name: item.name,
       description: item.description || '',
@@ -162,11 +187,8 @@ const AdminRentals = () => {
       images: item.images || [],
       category: item.category || '',
       specifications: item.specifications || {},
-      is_featured: item.is_featured,
       is_active: item.is_active,
-      is_expired: item.is_expired || false,
-      is_unavailable: item.is_unavailable || false,
-      is_on_request: item.is_on_request || false,
+      status_tag_ids: tagIds,
       content: item.content || '',
     });
     setDialogOpen(true);
@@ -255,10 +277,6 @@ const AdminRentals = () => {
       delete newSpecs[key];
       return { ...prev, specifications: newSpecs };
     });
-  };
-
-  const isVideo = (url: string) => {
-    return url.match(/\.(mp4|webm|ogg|mov)$/i);
   };
 
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
@@ -380,30 +398,30 @@ const AdminRentals = () => {
                 )}
               </div>
 
-              {/* Status Toggles */}
-              <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
-                <Label className="text-sm font-semibold">Rental Status</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_active" checked={formData.is_active} onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} />
-                    <Label htmlFor="is_active" className="text-sm">Active</Label>
+              {/* Status Section */}
+              <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                <div className="space-y-3">
+                  <Label className="text-sm font-semibold">Visibility</Label>
+                  <div className="flex items-center gap-3">
+                    <Switch 
+                      id="is_active" 
+                      checked={formData.is_active} 
+                      onCheckedChange={(c) => setFormData(p => ({ ...p, is_active: c }))} 
+                    />
+                    <Label htmlFor="is_active" className="text-sm">
+                      Active <span className="text-muted-foreground">(visible on public site)</span>
+                    </Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_featured" checked={formData.is_featured} onCheckedChange={(c) => setFormData(p => ({ ...p, is_featured: c }))} />
-                    <Label htmlFor="is_featured" className="text-sm text-amber-600">Featured</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_expired" checked={formData.is_expired} onCheckedChange={(c) => setFormData(p => ({ ...p, is_expired: c }))} />
-                    <Label htmlFor="is_expired" className="text-sm text-gray-500">Expired</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_unavailable" checked={formData.is_unavailable} onCheckedChange={(c) => setFormData(p => ({ ...p, is_unavailable: c }))} />
-                    <Label htmlFor="is_unavailable" className="text-sm text-red-500">Unavailable</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Switch id="is_on_request" checked={formData.is_on_request} onCheckedChange={(c) => setFormData(p => ({ ...p, is_on_request: c }))} />
-                    <Label htmlFor="is_on_request" className="text-sm text-blue-500">On Request</Label>
-                  </div>
+                </div>
+                
+                <div className="space-y-3 pt-3 border-t">
+                  <Label className="text-sm font-semibold">Status Tags</Label>
+                  <p className="text-xs text-muted-foreground">Select status badges to display on this rental. Create new tags in the Status Tags section.</p>
+                  <StatusTagSelector
+                    productId={editingItem?.id}
+                    selectedTagIds={formData.status_tag_ids}
+                    onTagsChange={(ids) => setFormData(p => ({ ...p, status_tag_ids: ids }))}
+                  />
                 </div>
               </div>
 
@@ -452,6 +470,9 @@ const AdminRentals = () => {
                       <Star className="w-3 h-3" /> Featured
                     </div>
                   )}
+                  {!item.is_active && (
+                    <div className="absolute bottom-2 left-2 bg-muted text-muted-foreground px-2 py-1 rounded text-xs">Inactive</div>
+                  )}
                   {item.images && item.images.length > 1 && (
                     <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
                       +{item.images.length - 1} more
@@ -460,7 +481,7 @@ const AdminRentals = () => {
                 </div>
                 <CardContent className="p-4">
                   <h3 className="font-semibold truncate">{item.name}</h3>
-                  <span className="font-bold text-primary">{item.price}/day</span>
+                  <p className="text-primary font-bold mt-1">{item.price}/day</p>
                   <div className="flex gap-2 mt-4">
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit
@@ -476,7 +497,7 @@ const AdminRentals = () => {
 
           {rentals.length === 0 && (
             <Card className="p-12 text-center">
-              <p className="text-muted-foreground">No rentals yet. Click "Add Rental" to create your first rental product.</p>
+              <p className="text-muted-foreground">No rentals yet. Click "Add Rental" to create your first rental item.</p>
             </Card>
           )}
 
