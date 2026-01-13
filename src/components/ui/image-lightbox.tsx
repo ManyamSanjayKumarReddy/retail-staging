@@ -58,11 +58,11 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-black/95 border-none overflow-hidden">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] p-0 bg-white border-none overflow-hidden">
         {/* Close Button */}
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          className="absolute top-4 right-4 z-50 p-2 rounded-full bg-black/10 hover:bg-black/20 text-gray-700 transition-colors"
           aria-label="Close"
         >
           <X className="w-6 h-6" />
@@ -70,7 +70,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
         {/* Image Counter */}
         {images.length > 1 && (
-          <div className="absolute top-4 left-4 z-50 px-3 py-1 rounded-full bg-white/10 text-white text-sm">
+          <div className="absolute top-4 left-4 z-50 px-3 py-1 rounded-full bg-black/10 text-gray-700 text-sm font-medium">
             {currentIndex + 1} / {images.length}
           </div>
         )}
@@ -79,7 +79,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
         {!isVideo(currentImage) && (
           <button
             onClick={toggleZoom}
-            className="absolute top-4 left-1/2 -translate-x-1/2 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="absolute top-4 left-1/2 -translate-x-1/2 z-50 p-2 rounded-full bg-black/10 hover:bg-black/20 text-gray-700 transition-colors"
             aria-label={zoom === 1 ? 'Zoom in' : 'Zoom out'}
           >
             {zoom === 1 ? <ZoomIn className="w-5 h-5" /> : <ZoomOut className="w-5 h-5" />}
@@ -115,14 +115,14 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           <>
             <button
               onClick={prev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/10 hover:bg-black/20 text-gray-700 transition-colors"
               aria-label="Previous image"
             >
               <ChevronLeft className="w-8 h-8" />
             </button>
             <button
               onClick={next}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-50 p-3 rounded-full bg-black/10 hover:bg-black/20 text-gray-700 transition-colors"
               aria-label="Next image"
             >
               <ChevronRight className="w-8 h-8" />
@@ -132,7 +132,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
         {/* Thumbnail Strip */}
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2 p-2 rounded-lg bg-black/50 backdrop-blur max-w-[80vw] overflow-x-auto">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 flex gap-2 p-2 rounded-lg bg-gray-100/90 backdrop-blur max-w-[80vw] overflow-x-auto">
             {images.map((img, index) => (
               <button
                 key={index}
@@ -143,7 +143,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
                 className={cn(
                   "flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all",
                   index === currentIndex
-                    ? "border-white ring-2 ring-white/50"
+                    ? "border-primary ring-2 ring-primary/50"
                     : "border-transparent opacity-60 hover:opacity-100"
                 )}
               >
