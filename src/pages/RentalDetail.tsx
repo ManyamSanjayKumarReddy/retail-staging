@@ -15,6 +15,7 @@ import { StatusBadges } from "@/components/StatusBadges";
 import { LinksAttachmentsDisplay } from "@/components/LinksAttachmentsDisplay";
 import { supabase } from "@/lib/supabase";
 import { StatusTag, ExternalLink, Attachment } from "@/types/database";
+import { formatContent } from "@/lib/formatContent";
 
 const RentalDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -258,7 +259,7 @@ const RentalDetail = () => {
             <div className="mt-16 animate-fade-in">
               <h2 className="text-2xl font-bold text-foreground mb-6">Rental Details</h2>
               <div className="prose prose-lg max-w-none text-foreground-secondary bg-muted/30 rounded-2xl p-6 md:p-8">
-                <div className="whitespace-pre-wrap leading-relaxed">{content}</div>
+                {formatContent(content)}
               </div>
             </div>
           )}
