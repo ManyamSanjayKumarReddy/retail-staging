@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
+import { calculateDiscountPercent } from "@/lib/priceUtils";
 
 export const FeaturedSection = () => {
   const { products, loading } = useProducts({ isRental: false, isFeatured: true, limit: 4 });
@@ -48,7 +49,7 @@ export const FeaturedSection = () => {
                   image={item.images?.[0] || item.image || '/placeholder.svg'}
                   price={item.price}
                   originalPrice={item.original_price}
-                  discountPercent={item.original_price && item.price ? Math.round((1 - Number(String(item.price).replace(/[^0-9.-]/g, '')) / Number(String(item.original_price).replace(/[^0-9.-]/g, ''))) * 100) : undefined}
+                  discountPercent={calculateDiscountPercent(item.price, item.original_price) || undefined}
                   detailPath={`/items/${item.id}`}
                 />
               </div>

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { Product, StatusTag } from "@/types/database";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { parsePrice } from "@/lib/priceUtils";
 import {
   Select,
   SelectContent,
@@ -90,11 +91,7 @@ const Rentals = () => {
     }
   };
 
-  // Helper to parse price
-  const parsePrice = (price: number | string): number => {
-    if (typeof price === 'number') return price;
-    return parseFloat(String(price).replace(/[^0-9.-]/g, '')) || 0;
-  };
+  // parsePrice is now imported from @/lib/priceUtils
 
   // Filter and sort rentals
   const filteredRentals = useMemo(() => {

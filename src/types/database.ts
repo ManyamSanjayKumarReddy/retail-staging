@@ -54,6 +54,16 @@ export interface ProductStatusTag {
   status_tag_id: string;
 }
 
+export interface ExternalLink {
+  title: string;
+  url: string;
+}
+
+export interface Attachment {
+  name: string;
+  url: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -67,6 +77,8 @@ export interface Product {
   images: string[];
   category: string;
   specifications: Record<string, string>;
+  external_links?: ExternalLink[];
+  attachments?: Attachment[];
   is_featured: boolean;
   is_rental: boolean;
   is_active: boolean;

@@ -11,10 +11,11 @@ import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
 import { ImageReorder } from '@/components/admin/ImageReorder';
 import { StatusTagSelector } from '@/components/admin/StatusTagSelector';
+import { LinksAttachmentsEditor } from '@/components/admin/LinksAttachmentsEditor';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign } from 'lucide-react';
-import { Product } from '@/types/database';
+import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
 const MAX_MEDIA = 4;
@@ -45,6 +46,8 @@ const AdminItems = () => {
     is_active: true,
     status_tag_ids: [] as string[],
     content: '',
+    external_links: [] as ExternalLink[],
+    attachments: [] as Attachment[],
   });
 
   useEffect(() => {
@@ -105,6 +108,8 @@ const AdminItems = () => {
         category: formData.category,
         specifications: formData.specifications,
         content: formData.content,
+        external_links: formData.external_links,
+        attachments: formData.attachments,
         is_featured: false, // Deprecated, using status tags now
         is_active: formData.is_active,
         is_rental: false,
@@ -184,6 +189,8 @@ const AdminItems = () => {
       is_active: true,
       status_tag_ids: [],
       content: '',
+      external_links: [],
+      attachments: [],
     });
     setEditingItem(null);
   };
@@ -208,6 +215,8 @@ const AdminItems = () => {
       is_active: item.is_active,
       status_tag_ids: tagIds,
       content: item.content || '',
+      external_links: item.external_links || [],
+      attachments: item.attachments || [],
     });
     setDialogOpen(true);
   };
@@ -468,6 +477,16 @@ const AdminItems = () => {
                   <p className="text-sm text-muted-foreground">No specifications added. Click "Add" to add product specs like Color, Size, etc.</p>
                 )}
               </div>
+
+              {/* Links & Attachments Section */}
+              <LinksAttachmentsEditor
+                links={formData.external_links}
+                attachments={formData.attachments}
+                onLinksChange={(links) => setFormData(p => ({ ...p, external_links: links }))}
+                onAttachmentsChange={(attachments) => setFormData(p => ({ ...p, attachments }))}
+                maxLinks={3}
+                maxAttachments={3}
+              />
 
               {/* Status Section */}
               <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
