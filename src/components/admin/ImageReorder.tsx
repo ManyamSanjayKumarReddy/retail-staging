@@ -66,7 +66,7 @@ export const ImageReorder: React.FC<ImageReorderProps> = ({
   return (
     <div className="space-y-2">
       <p className="text-xs text-muted-foreground">Drag to reorder. First image is the main image.</p>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {images.map((url, index) => (
           <div
             key={`${url}-${index}`}

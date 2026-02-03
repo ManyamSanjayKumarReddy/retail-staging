@@ -5,16 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
 import { ImageReorder } from '@/components/admin/ImageReorder';
 import { StatusTagSelector } from '@/components/admin/StatusTagSelector';
+import { LinksAttachmentsEditor } from '@/components/admin/LinksAttachmentsEditor';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign } from 'lucide-react';
-import { Product } from '@/types/database';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags } from 'lucide-react';
+import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
 const MAX_MEDIA = 4;
@@ -29,6 +33,8 @@ const AdminItems = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [specModalOpen, setSpecModalOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -45,6 +51,8 @@ const AdminItems = () => {
     is_active: true,
     status_tag_ids: [] as string[],
     content: '',
+    external_links: [] as ExternalLink[],
+    attachments: [] as Attachment[],
   });
 
   useEffect(() => {
@@ -105,6 +113,8 @@ const AdminItems = () => {
         category: formData.category,
         specifications: formData.specifications,
         content: formData.content,
+        external_links: formData.external_links,
+        attachments: formData.attachments,
         is_featured: false, // Deprecated, using status tags now
         is_active: formData.is_active,
         is_rental: false,
@@ -184,6 +194,8 @@ const AdminItems = () => {
       is_active: true,
       status_tag_ids: [],
       content: '',
+      external_links: [],
+      attachments: [],
     });
     setEditingItem(null);
   };
@@ -208,6 +220,8 @@ const AdminItems = () => {
       is_active: item.is_active,
       status_tag_ids: tagIds,
       content: item.content || '',
+      external_links: item.external_links || [],
+      attachments: item.attachments || [],
     });
     setDialogOpen(true);
   };
@@ -313,16 +327,23 @@ const AdminItems = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Items</h1>
           <p className="text-muted-foreground mt-1">Manage your product catalog ({totalCount} items)</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center gap-2">
+          {selectedItems.length > 0 && (
+            <Button variant="outline" onClick={() => setBulkTagDialogOpen(true)}>
+              <Tags className="w-4 h-4 mr-2" />
+              Update Tags ({selectedItems.length})
+            </Button>
+          )}
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" /> Add Item</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingItem ? 'Edit Item' : 'Add New Item'}</DialogTitle>
             </DialogHeader>
@@ -345,14 +366,12 @@ const AdminItems = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="content">Detailed Content</Label>
-                <Textarea 
-                  id="content" 
+                <RichTextEditor 
                   value={formData.content} 
-                  onChange={(e) => setFormData(p => ({ ...p, content: e.target.value }))} 
-                  rows={5} 
+                  onChange={(value) => setFormData(p => ({ ...p, content: value }))} 
                   placeholder="Detailed product information, features, usage instructions..."
+                  rows={8}
                 />
-                <p className="text-xs text-muted-foreground">This will be displayed on the product detail page</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -469,6 +488,16 @@ const AdminItems = () => {
                 )}
               </div>
 
+              {/* Links & Attachments Section */}
+              <LinksAttachmentsEditor
+                links={formData.external_links}
+                attachments={formData.attachments}
+                onLinksChange={(links) => setFormData(p => ({ ...p, external_links: links }))}
+                onAttachmentsChange={(attachments) => setFormData(p => ({ ...p, attachments }))}
+                maxLinks={3}
+                maxAttachments={3}
+              />
+
               {/* Status Section */}
               <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
                 <div className="space-y-3">
@@ -506,7 +535,19 @@ const AdminItems = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      {/* Bulk Status Tag Dialog */}
+      <BulkStatusTagDialog
+        open={bulkTagDialogOpen}
+        onOpenChange={setBulkTagDialogOpen}
+        selectedProductIds={selectedItems}
+        onComplete={() => {
+          setSelectedItems([]);
+          fetchItems();
+        }}
+      />
 
       {/* Specification Modal */}
       <SpecificationModal
@@ -522,20 +563,48 @@ const AdminItems = () => {
         </div>
       ) : (
         <>
+          {items.length > 0 && (
+            <div className="flex items-center gap-2 mb-4">
+              <Checkbox
+                checked={selectedItems.length === items.length && items.length > 0}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedItems(items.map(i => i.id));
+                  } else {
+                    setSelectedItems([]);
+                  }
+                }}
+              />
+              <span className="text-sm text-muted-foreground">
+                {selectedItems.length > 0 
+                  ? `${selectedItems.length} selected` 
+                  : 'Select all'}
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
-              <Card key={item.id} className="card-hover overflow-hidden">
+              <Card key={item.id} className={`card-hover overflow-hidden ${selectedItems.includes(item.id) ? 'ring-2 ring-primary' : ''}`}>
                 <div className="aspect-square relative bg-secondary">
+                  {/* Selection checkbox */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <Checkbox
+                      checked={selectedItems.includes(item.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedItems([...selectedItems, item.id]);
+                        } else {
+                          setSelectedItems(selectedItems.filter(id => id !== item.id));
+                        }
+                      }}
+                      className="bg-white/90 backdrop-blur"
+                    />
+                  </div>
                   {item.images?.[0] || item.image ? (
                     <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                       <Image className="w-12 h-12" />
-                    </div>
-                  )}
-                  {item.is_featured && (
-                    <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs flex items-center gap-1">
-                      <Star className="w-3 h-3" /> Featured
                     </div>
                   )}
                   {item.discount_value && (

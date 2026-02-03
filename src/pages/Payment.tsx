@@ -13,8 +13,12 @@ interface PaymentSettings {
   card_enabled: boolean;
   cod_enabled: boolean;
   bank_enabled: boolean;
+  qr_scanner_enabled: boolean;
   qr_code_image: string | null;
   qr_code_image_2: string | null;
+  qr_scanner_image: string | null;
+  qr_scanner_title: string;
+  qr_scanner_description: string;
   upi_id: string | null;
   upi_id_2: string | null;
   bank_name: string | null;
@@ -46,8 +50,12 @@ const defaultPaymentSettings: PaymentSettings = {
   card_enabled: true,
   cod_enabled: true,
   bank_enabled: true,
+  qr_scanner_enabled: true,
   qr_code_image: null,
   qr_code_image_2: null,
+  qr_scanner_image: null,
+  qr_scanner_title: 'QR Code Scanner',
+  qr_scanner_description: 'Scan this QR code to make payment directly',
   upi_id: null,
   upi_id_2: null,
   bank_name: null,
@@ -299,6 +307,45 @@ const Payment = () => {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* QR Scanner Section (Separate from UPI) */}
+            {paymentSettings.qr_scanner_enabled && paymentSettings.qr_scanner_image && (
+              <Card className="mb-10 border-border animate-fade-in-up" style={{ animationDelay: "0.42s" }}>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/10">
+                      <QrCode className="h-5 w-5 text-teal-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-foreground">
+                      {paymentSettings.qr_scanner_title}
+                    </h3>
+                  </div>
+                  
+                  <div className="grid gap-6 md:grid-cols-2 items-center">
+                    <div className="flex justify-center">
+                      <div className="bg-white p-4 rounded-xl shadow-card">
+                        <img 
+                          src={paymentSettings.qr_scanner_image} 
+                          alt="Payment QR Code Scanner" 
+                          className="w-48 h-48 md:w-56 md:h-56 object-contain"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <p className="text-muted-foreground">
+                        {paymentSettings.qr_scanner_description}
+                      </p>
+                      <div className="flex items-center gap-2 p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg border border-teal-200 dark:border-teal-800">
+                        <QrCode className="h-5 w-5 text-teal-600 shrink-0" />
+                        <span className="text-sm text-teal-700 dark:text-teal-300">
+                          Scan with any payment app to pay instantly
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}

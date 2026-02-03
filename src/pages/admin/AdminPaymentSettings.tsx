@@ -15,8 +15,12 @@ interface PaymentSettings {
   card_enabled: boolean;
   cod_enabled: boolean;
   bank_enabled: boolean;
+  qr_scanner_enabled: boolean;
   qr_code_image: string | null;
   qr_code_image_2: string | null;
+  qr_scanner_image: string | null;
+  qr_scanner_title: string;
+  qr_scanner_description: string;
   upi_id: string | null;
   upi_id_2: string | null;
   bank_name: string | null;
@@ -49,8 +53,12 @@ const defaultSettings: PaymentSettings = {
   card_enabled: true,
   cod_enabled: true,
   bank_enabled: true,
+  qr_scanner_enabled: true,
   qr_code_image: null,
   qr_code_image_2: null,
+  qr_scanner_image: null,
+  qr_scanner_title: 'QR Code Scanner',
+  qr_scanner_description: 'Scan this QR code to make payment directly',
   upi_id: null,
   upi_id_2: null,
   bank_name: null,
@@ -124,8 +132,12 @@ const AdminPaymentSettings = () => {
         card_enabled: settings.card_enabled,
         cod_enabled: settings.cod_enabled,
         bank_enabled: settings.bank_enabled,
+        qr_scanner_enabled: settings.qr_scanner_enabled,
         qr_code_image: settings.qr_code_image,
         qr_code_image_2: settings.qr_code_image_2,
+        qr_scanner_image: settings.qr_scanner_image,
+        qr_scanner_title: settings.qr_scanner_title,
+        qr_scanner_description: settings.qr_scanner_description,
         upi_id: settings.upi_id,
         upi_id_2: settings.upi_id_2,
         bank_name: settings.bank_name,
@@ -177,7 +189,7 @@ const AdminPaymentSettings = () => {
     }
   };
 
-  const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'qr_code_image' | 'qr_code_image_2') => {
+  const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'qr_code_image' | 'qr_code_image_2' | 'qr_scanner_image') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -312,9 +324,93 @@ const AdminPaymentSettings = () => {
                 onCheckedChange={(c) => setSettings(p => ({ ...p, bank_enabled: c }))}
               />
             </div>
+
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-500/10">
+                  <QrCode className="h-5 w-5 text-teal-600" />
+                </div>
+                <div>
+                  <p className="font-semibold">QR Code Scanner</p>
+                  <p className="text-sm text-muted-foreground">Separate QR for direct payment</p>
+                </div>
+              </div>
+              <Switch
+                checked={settings.qr_scanner_enabled}
+                onCheckedChange={(c) => setSettings(p => ({ ...p, qr_scanner_enabled: c }))}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* QR Code Scanner Section (Separate from UPI) */}
+      {settings.qr_scanner_enabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5 text-teal-600" />
+              QR Code Scanner (Payment)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label>QR Code Image</Label>
+                {settings.qr_scanner_image ? (
+                  <div className="relative w-48 h-48 mx-auto border rounded-lg overflow-hidden bg-white p-2">
+                    <img src={settings.qr_scanner_image} alt="QR Scanner" className="w-full h-full object-contain" />
+                    <button
+                      type="button"
+                      onClick={() => setSettings(p => ({ ...p, qr_scanner_image: null }))}
+                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground p-1 rounded-full"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg">
+                    <Image className="w-10 h-10 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground mb-3">Upload QR code for scanner</p>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleQRUpload(e, 'qr_scanner_image')}
+                      disabled={uploadingQR}
+                      className="max-w-[200px]"
+                    />
+                    {uploadingQR && <Loader2 className="w-4 h-4 animate-spin mt-2" />}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="qr_scanner_title">Section Title</Label>
+                  <Input
+                    id="qr_scanner_title"
+                    value={settings.qr_scanner_title}
+                    onChange={(e) => setSettings(p => ({ ...p, qr_scanner_title: e.target.value }))}
+                    placeholder="QR Code Scanner"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="qr_scanner_description">Description</Label>
+                  <Input
+                    id="qr_scanner_description"
+                    value={settings.qr_scanner_description}
+                    onChange={(e) => setSettings(p => ({ ...p, qr_scanner_description: e.target.value }))}
+                    placeholder="Scan this QR code to make payment"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  This QR code will be displayed as a separate payment option, distinct from UPI QR codes.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* QR Code & UPI Details */}
       {settings.upi_enabled && (

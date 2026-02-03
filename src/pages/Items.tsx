@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { Product, StatusTag } from "@/types/database";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { parsePrice, calculateDiscountPercent } from "@/lib/priceUtils";
 import {
   Select,
   SelectContent,
@@ -90,11 +91,7 @@ const Items = () => {
     }
   };
 
-  // Helper to parse price (handles both number and string with currency)
-  const parsePrice = (price: number | string): number => {
-    if (typeof price === 'number') return price;
-    return parseFloat(String(price).replace(/[^0-9.-]/g, '')) || 0;
-  };
+  // parsePrice is now imported from @/lib/priceUtils
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -292,7 +289,7 @@ const Items = () => {
                       image={item.images?.[0] || item.image || "/placeholder.svg"}
                       price={item.price}
                       originalPrice={item.original_price}
-                      discountPercent={item.original_price && item.price ? Math.round((1 - parsePrice(item.price) / parsePrice(item.original_price)) * 100) : undefined}
+                      discountPercent={calculateDiscountPercent(item.price, item.original_price) || undefined}
                       statusTags={item.status_tags}
                       detailPath={`/items/${item.id}`}
                     />
