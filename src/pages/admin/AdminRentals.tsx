@@ -5,15 +5,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Pagination } from '@/components/Pagination';
 import SpecificationModal from '@/components/admin/SpecificationModal';
 import { ImageReorder } from '@/components/admin/ImageReorder';
 import { StatusTagSelector } from '@/components/admin/StatusTagSelector';
 import { LinksAttachmentsEditor } from '@/components/admin/LinksAttachmentsEditor';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Star } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Tags } from 'lucide-react';
 import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -29,6 +32,8 @@ const AdminRentals = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [specModalOpen, setSpecModalOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -300,19 +305,26 @@ const AdminRentals = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Rentals</h1>
           <p className="text-muted-foreground mt-1">Manage rental products ({totalCount} items)</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button><Plus className="w-4 h-4 mr-2" /> Add Rental</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{editingItem ? 'Edit Rental' : 'Add New Rental'}</DialogTitle>
-            </DialogHeader>
+        <div className="flex items-center gap-2">
+          {selectedItems.length > 0 && (
+            <Button variant="outline" onClick={() => setBulkTagDialogOpen(true)}>
+              <Tags className="w-4 h-4 mr-2" />
+              Update Tags ({selectedItems.length})
+            </Button>
+          )}
+          <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button><Plus className="w-4 h-4 mr-2" /> Add Rental</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingItem ? 'Edit Rental' : 'Add New Rental'}</DialogTitle>
+              </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -332,14 +344,12 @@ const AdminRentals = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="content">Detailed Content</Label>
-                <Textarea 
-                  id="content" 
+                <RichTextEditor 
                   value={formData.content} 
-                  onChange={(e) => setFormData(p => ({ ...p, content: e.target.value }))} 
-                  rows={5} 
+                  onChange={(value) => setFormData(p => ({ ...p, content: value }))} 
                   placeholder="Detailed rental information, features, terms and conditions..."
+                  rows={8}
                 />
-                <p className="text-xs text-muted-foreground">This will be displayed on the rental detail page</p>
               </div>
 
               <div className="space-y-2">
@@ -454,7 +464,19 @@ const AdminRentals = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+
+      {/* Bulk Status Tag Dialog */}
+      <BulkStatusTagDialog
+        open={bulkTagDialogOpen}
+        onOpenChange={setBulkTagDialogOpen}
+        selectedProductIds={selectedItems}
+        onComplete={() => {
+          setSelectedItems([]);
+          fetchRentals();
+        }}
+      />
 
       {/* Specification Modal */}
       <SpecificationModal
@@ -470,10 +492,43 @@ const AdminRentals = () => {
         </div>
       ) : (
         <>
+          {rentals.length > 0 && (
+            <div className="flex items-center gap-2 mb-4">
+              <Checkbox
+                checked={selectedItems.length === rentals.length && rentals.length > 0}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedItems(rentals.map(i => i.id));
+                  } else {
+                    setSelectedItems([]);
+                  }
+                }}
+              />
+              <span className="text-sm text-muted-foreground">
+                {selectedItems.length > 0 
+                  ? `${selectedItems.length} selected` 
+                  : 'Select all'}
+              </span>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {rentals.map((item) => (
-              <Card key={item.id} className="card-hover overflow-hidden">
+              <Card key={item.id} className={`card-hover overflow-hidden ${selectedItems.includes(item.id) ? 'ring-2 ring-primary' : ''}`}>
                 <div className="aspect-square relative bg-secondary">
+                  {/* Selection checkbox */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <Checkbox
+                      checked={selectedItems.includes(item.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedItems([...selectedItems, item.id]);
+                        } else {
+                          setSelectedItems(selectedItems.filter(id => id !== item.id));
+                        }
+                      }}
+                      className="bg-white/90 backdrop-blur"
+                    />
+                  </div>
                   {item.images?.[0] || item.image ? (
                     <img src={item.images?.[0] || item.image} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
@@ -481,14 +536,9 @@ const AdminRentals = () => {
                       <Image className="w-12 h-12" />
                     </div>
                   )}
-                  <div className="absolute top-2 left-2 bg-whatsapp text-whatsapp-foreground px-2 py-1 rounded text-xs flex items-center gap-1">
+                  <div className="absolute top-2 right-2 bg-whatsapp text-whatsapp-foreground px-2 py-1 rounded text-xs flex items-center gap-1">
                     <Package className="w-3 h-3" /> Rental
                   </div>
-                  {item.is_featured && (
-                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-2 py-1 rounded text-xs flex items-center gap-1">
-                      <Star className="w-3 h-3" /> Featured
-                    </div>
-                  )}
                   {!item.is_active && (
                     <div className="absolute bottom-2 left-2 bg-muted text-muted-foreground px-2 py-1 rounded text-xs">Inactive</div>
                   )}
