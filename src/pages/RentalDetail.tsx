@@ -12,8 +12,9 @@ import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { StatusBadges } from "@/components/StatusBadges";
+import { LinksAttachmentsDisplay } from "@/components/LinksAttachmentsDisplay";
 import { supabase } from "@/lib/supabase";
-import { StatusTag } from "@/types/database";
+import { StatusTag, ExternalLink, Attachment } from "@/types/database";
 
 const RentalDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -101,6 +102,10 @@ const RentalDetail = () => {
   const content = (item as any).content;
   const ctaText = settings?.rental_detail_cta_text || 'Request Rental on WhatsApp';
 
+  // Get links and attachments
+  const externalLinks: ExternalLink[] = (item as any).external_links || [];
+  const attachments: Attachment[] = (item as any).attachments || [];
+
   // Disable past dates unless allowed by admin
   const disabledDates = allowPastDates ? undefined : { before: new Date() };
 
@@ -130,11 +135,12 @@ const RentalDetail = () => {
                   </>
                 )}
 
-                {/* Status Tags & Rental Badge */}
-                <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                  <span className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground shadow-lg">Available for Rent</span>
-                  <StatusBadges tags={statusTags} size="md" />
-                </div>
+                {/* Status Tags */}
+                {statusTags.length > 0 && (
+                  <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                    <StatusBadges tags={statusTags} size="md" />
+                  </div>
+                )}
 
                 {images.length > 1 && (
                   <>
@@ -244,6 +250,9 @@ const RentalDetail = () => {
               </Button>
             </div>
           </div>
+
+          {/* Links & Attachments */}
+          <LinksAttachmentsDisplay links={externalLinks} attachments={attachments} />
 
           {content && (
             <div className="mt-16 animate-fade-in">

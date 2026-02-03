@@ -8,8 +8,10 @@ import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { StatusBadges } from "@/components/StatusBadges";
+import { LinksAttachmentsDisplay } from "@/components/LinksAttachmentsDisplay";
 import { supabase } from "@/lib/supabase";
-import { StatusTag } from "@/types/database";
+import { StatusTag, ExternalLink, Attachment } from "@/types/database";
+import { parsePrice, calculateDiscountPercent } from "@/lib/priceUtils";
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -71,26 +73,26 @@ const ItemDetail = () => {
 
   const images = item.images?.length ? item.images : [item.image || '/placeholder.svg'];
   
-  const parsePrice = (p: string | number | undefined): number => {
-    if (p === undefined || p === null) return 0;
-    if (typeof p === 'number') return p;
-    return parseFloat(String(p).replace(/[^0-9.-]/g, '')) || 0;
-  };
-  
   const priceNum = parsePrice(item.price);
   const originalPriceNum = parsePrice(item.original_price);
   const currency = settings?.currency_symbol || '₹';
 
-  // Calculate discount based on discount_type
+  // Calculate discount based on discount_type or price difference
   let discountDisplay: string | null = null;
   if (item.discount_value && item.discount_value > 0) {
     discountDisplay = item.discount_type === 'percentage' 
       ? `${item.discount_value}% OFF` 
       : `${currency}${item.discount_value} OFF`;
-  } else if (originalPriceNum > 0 && priceNum > 0 && originalPriceNum > priceNum) {
-    const percent = Math.round((1 - priceNum / originalPriceNum) * 100);
-    if (percent > 0) discountDisplay = `${percent}% OFF`;
+  } else {
+    const calculatedPercent = calculateDiscountPercent(item.price, item.original_price);
+    if (calculatedPercent > 0) {
+      discountDisplay = `${calculatedPercent}% OFF`;
+    }
   }
+
+  // Get links and attachments
+  const externalLinks: ExternalLink[] = (item as any).external_links || [];
+  const attachments: Attachment[] = (item as any).attachments || [];
   
   const formatPrice = (p: string | number | undefined): string => {
     if (p === undefined || p === null) return '';
@@ -231,6 +233,9 @@ const ItemDetail = () => {
               </Button>
             </div>
           </div>
+
+          {/* Links & Attachments */}
+          <LinksAttachmentsDisplay links={externalLinks} attachments={attachments} />
 
           {content && (
             <div className="mt-16 animate-fade-in">
