@@ -17,7 +17,7 @@ import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
 import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
