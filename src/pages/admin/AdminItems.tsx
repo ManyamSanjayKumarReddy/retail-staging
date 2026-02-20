@@ -17,7 +17,7 @@ import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown } from 'lucide-react';
 import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -76,6 +76,7 @@ const AdminItems = () => {
         .from('products')
         .select('*')
         .eq('is_rental', false)
+        .order('sort_order', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false })
         .range(from, to);
 
@@ -85,6 +86,38 @@ const AdminItems = () => {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMoveItem = async (itemId: string, direction: 'up' | 'down') => {
+    const currentIndex = items.findIndex(i => i.id === itemId);
+    if (currentIndex === -1) return;
+    if (direction === 'up' && currentIndex === 0) return;
+    if (direction === 'down' && currentIndex === items.length - 1) return;
+
+    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const currentItem = items[currentIndex];
+    const swapItem = items[swapIndex];
+
+    const currentOrder = currentItem.sort_order ?? (currentPage - 1) * ITEMS_PER_PAGE + currentIndex;
+    const swapOrder = swapItem.sort_order ?? (currentPage - 1) * ITEMS_PER_PAGE + swapIndex;
+
+    try {
+      await Promise.all([
+        supabase.from('products').update({ sort_order: swapOrder }).eq('id', currentItem.id),
+        supabase.from('products').update({ sort_order: currentOrder }).eq('id', swapItem.id),
+      ]);
+
+      // Optimistic update
+      const newItems = [...items];
+      newItems[currentIndex] = { ...swapItem, sort_order: currentOrder };
+      newItems[swapIndex] = { ...currentItem, sort_order: swapOrder };
+      setItems(newItems);
+
+      toast({ title: 'Order updated!' });
+    } catch (error) {
+      console.error('Error reordering:', error);
+      toast({ title: 'Failed to reorder', variant: 'destructive' });
     }
   };
 
@@ -583,7 +616,7 @@ const AdminItems = () => {
             </div>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((item) => (
+            {items.map((item, index) => (
               <Card key={item.id} className={`card-hover overflow-hidden ${selectedItems.includes(item.id) ? 'ring-2 ring-primary' : ''}`}>
                 <div className="aspect-square relative bg-secondary">
                   {/* Selection checkbox */}
@@ -632,6 +665,24 @@ const AdminItems = () => {
                   <div className="flex gap-2 mt-4">
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleMoveItem(item.id, 'up')}
+                      disabled={index === 0 && currentPage === 1}
+                      title="Move up"
+                    >
+                      <ArrowUp className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => handleMoveItem(item.id, 'down')}
+                      disabled={index === items.length - 1 && currentPage === totalPages}
+                      title="Move down"
+                    >
+                      <ArrowDown className="w-4 h-4" />
                     </Button>
                     <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDelete(item.id)}>
                       <Trash2 className="w-4 h-4" />

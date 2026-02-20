@@ -20,6 +20,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
           .from('products')
           .select('*')
           .eq('is_active', true)
+          .order('sort_order', { ascending: true, nullsFirst: false })
           .order('created_at', { ascending: false });
 
         if (options.isRental !== undefined) {
