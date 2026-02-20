@@ -53,6 +53,7 @@ const Rentals = () => {
         .select("*")
         .eq("is_rental", true)
         .eq("is_active", true)
+        .order("sort_order", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
