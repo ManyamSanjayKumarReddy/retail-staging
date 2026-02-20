@@ -17,7 +17,7 @@ import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
 import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -35,6 +35,8 @@ const AdminItems = () => {
   const [specModalOpen, setSpecModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -119,6 +121,52 @@ const AdminItems = () => {
       console.error('Error reordering:', error);
       toast({ title: 'Failed to reorder', variant: 'destructive' });
     }
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    setDragOverIndex(index);
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) return;
+
+    const newItems = [...items];
+    const [draggedItem] = newItems.splice(draggedIndex, 1);
+    newItems.splice(dropIndex, 0, draggedItem);
+
+    // Assign new sort_order values
+    const updates = newItems.map((item, i) => ({
+      id: item.id,
+      sort_order: (currentPage - 1) * ITEMS_PER_PAGE + i
+    }));
+
+    setItems(newItems.map((item, i) => ({ ...item, sort_order: updates[i].sort_order })));
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+
+    try {
+      await Promise.all(
+        updates.map(u => supabase.from('products').update({ sort_order: u.sort_order }).eq('id', u.id))
+      );
+      toast({ title: 'Order updated!' });
+    } catch (error) {
+      console.error('Error reordering:', error);
+      toast({ title: 'Failed to reorder', variant: 'destructive' });
+      fetchItems();
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   const fetchProductTags = async (productId: string): Promise<string[]> => {
@@ -617,8 +665,21 @@ const AdminItems = () => {
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item, index) => (
-              <Card key={item.id} className={`card-hover overflow-hidden ${selectedItems.includes(item.id) ? 'ring-2 ring-primary' : ''}`}>
+              <Card 
+                key={item.id} 
+                draggable
+                onDragStart={(e) => handleDragStart(e, index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragLeave={() => setDragOverIndex(null)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`card-hover overflow-hidden cursor-move transition-all ${selectedItems.includes(item.id) ? 'ring-2 ring-primary' : ''} ${draggedIndex === index ? 'opacity-50 scale-95' : ''} ${dragOverIndex === index ? 'ring-2 ring-primary/50 shadow-lg' : ''}`}
+              >
                 <div className="aspect-square relative bg-secondary">
+                  {/* Drag handle */}
+                  <div className="absolute top-2 right-12 z-10 bg-black/60 text-white p-1 rounded opacity-70 hover:opacity-100 transition-opacity">
+                    <GripVertical className="w-4 h-4" />
+                  </div>
                   {/* Selection checkbox */}
                   <div className="absolute top-2 left-2 z-10">
                     <Checkbox
@@ -655,7 +716,10 @@ const AdminItems = () => {
                   )}
                 </div>
                 <CardContent className="p-4">
-                  <h3 className="font-semibold truncate">{item.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">#{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</span>
+                    <h3 className="font-semibold truncate flex-1">{item.name}</h3>
+                  </div>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="font-bold text-primary">{item.price}</span>
                     {item.original_price && (
