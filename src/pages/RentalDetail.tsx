@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon, Clock, CheckCircle2, Loader2, Play, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, CalendarIcon, Clock, CheckCircle2, Loader2, Play, ZoomIn, Package } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useProduct } from "@/hooks/useProducts";
@@ -16,6 +16,7 @@ import { LinksAttachmentsDisplay } from "@/components/LinksAttachmentsDisplay";
 import { supabase } from "@/lib/supabase";
 import { StatusTag, ExternalLink, Attachment } from "@/types/database";
 import { formatContent } from "@/lib/formatContent";
+import { stripHtml } from "@/lib/utils";
 
 const RentalDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -88,7 +89,11 @@ const RentalDetail = () => {
     ? `From: ${format(fromDate, "PPP")} To: ${format(toDate, "PPP")}` 
     : fromDate ? `From: ${format(fromDate, "PPP")}` : "";
 
-  const whatsappMessage = `Hello! I would like to rent: ${item.name} - Price: ${formatPrice(item.price)}/day${dateRange ? ` ${dateRange}` : ""}`;
+  const cleanName = stripHtml(item.name);
+  const cleanDescription = stripHtml(item.description);
+  const stockCount = (item as any).stock_count;
+
+  const whatsappMessage = `Hello! I would like to rent: ${cleanName} - Price: ${formatPrice(item.price)}/day${dateRange ? ` ${dateRange}` : ""}`;
   const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
@@ -172,7 +177,7 @@ const RentalDetail = () => {
 
             {/* Rental Info */}
             <div className="animate-slide-in-right">
-              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">{item.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">{cleanName}</h1>
               
               {/* Status Tags below title */}
               {statusTags.length > 0 && (
@@ -185,7 +190,18 @@ const RentalDetail = () => {
                 <span className="text-3xl font-bold text-primary">{formatPrice(item.price)}</span>
                 <span className="text-lg text-muted-foreground">/day</span>
               </div>
-              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">{item.description}</p>
+
+              {/* Stock Count */}
+              {stockCount !== undefined && stockCount !== null && (
+                <div className="mt-3 flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <span className={`text-sm font-semibold ${stockCount > 0 ? 'text-green-600' : 'text-destructive'}`}>
+                    {stockCount > 0 ? `${stockCount} available` : 'Not available'}
+                  </span>
+                </div>
+              )}
+
+              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">{cleanDescription}</p>
 
               {/* Date Selection */}
               <div className="mt-8 p-5 rounded-xl bg-muted/50 border border-border">

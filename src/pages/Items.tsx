@@ -293,6 +293,7 @@ const Items = () => {
                       discountPercent={calculateDiscountPercent(item.price, item.original_price) || undefined}
                       statusTags={item.status_tags}
                       detailPath={`/items/${item.id}`}
+                      stockCount={(item as any).stock_count}
                     />
                   </div>
                 ))}
