@@ -83,6 +83,7 @@ export interface Product {
   is_rental: boolean;
   is_active: boolean;
   status_tags?: StatusTag[];
+  sort_order?: number;
   created_at: string;
   updated_at: string;
 }
