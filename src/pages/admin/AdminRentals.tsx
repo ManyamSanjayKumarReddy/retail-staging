@@ -51,6 +51,7 @@ const AdminRentals = () => {
     content: '',
     external_links: [] as ExternalLink[],
     attachments: [] as Attachment[],
+    stock_count: '' as string,
   });
 
   useEffect(() => {
@@ -187,9 +188,10 @@ const AdminRentals = () => {
         content: formData.content,
         external_links: formData.external_links,
         attachments: formData.attachments,
-        is_featured: false, // Deprecated, using status tags now
+        is_featured: false,
         is_active: formData.is_active,
         is_rental: true,
+        stock_count: formData.stock_count !== '' ? parseInt(formData.stock_count) : null,
         updated_at: new Date().toISOString(),
       };
 
@@ -260,6 +262,7 @@ const AdminRentals = () => {
       content: '',
       external_links: [],
       attachments: [],
+      stock_count: '',
     });
     setEditingItem(null);
   };
@@ -283,6 +286,7 @@ const AdminRentals = () => {
       content: item.content || '',
       external_links: item.external_links || [],
       attachments: item.attachments || [],
+      stock_count: item.stock_count !== null && item.stock_count !== undefined ? item.stock_count.toString() : '',
     });
     setDialogOpen(true);
   };
@@ -431,9 +435,15 @@ const AdminRentals = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="price">Price per Day * (e.g., ₹99 or $9.99)</Label>
-                <Input id="price" type="text" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: e.target.value }))} required placeholder="₹99" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price per Day * (e.g., ₹99 or $9.99)</Label>
+                  <Input id="price" type="text" value={formData.price} onChange={(e) => setFormData(p => ({ ...p, price: e.target.value }))} required placeholder="₹99" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="stock_count">Stock / Available Count</Label>
+                  <Input id="stock_count" type="number" min="0" value={formData.stock_count} onChange={(e) => setFormData(p => ({ ...p, stock_count: e.target.value }))} placeholder="e.g., 5" />
+                </div>
               </div>
 
               {/* Media Upload Section */}

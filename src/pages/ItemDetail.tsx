@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
-import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2, Play, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeft, Shield, Truck, Star, Loader2, Play, ZoomIn, Package } from "lucide-react";
 import { useProduct } from "@/hooks/useProducts";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { StatusTag, ExternalLink, Attachment } from "@/types/database";
 import { parsePrice, calculateDiscountPercent } from "@/lib/priceUtils";
 import { formatContent } from "@/lib/formatContent";
+import { stripHtml } from "@/lib/utils";
 
 const ItemDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -101,7 +102,11 @@ const ItemDetail = () => {
     return `${currency}${p}`;
   };
 
-  const whatsappMessage = `Hello! I would like to order: ${item.name} - Price: ${formatPrice(item.price)}`;
+  const cleanName = stripHtml(item.name);
+  const cleanDescription = stripHtml(item.description);
+  const stockCount = (item as any).stock_count;
+
+  const whatsappMessage = `Hello! I would like to order: ${cleanName} - Price: ${formatPrice(item.price)}`;
   const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(whatsappMessage)}`;
 
   const nextImage = () => setCurrentImage((prev) => (prev + 1) % images.length);
@@ -185,7 +190,7 @@ const ItemDetail = () => {
 
             {/* Product Info */}
             <div className="animate-slide-in-right">
-              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">{item.name}</h1>
+              <h1 className="text-2xl font-bold text-foreground md:text-3xl lg:text-4xl">{cleanName}</h1>
               
               {/* Status Tags below title */}
               {statusTags.length > 0 && (
@@ -200,7 +205,18 @@ const ItemDetail = () => {
                   <span className="text-xl text-muted-foreground line-through">{formatPrice(item.original_price)}</span>
                 )}
               </div>
-              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">{item.description}</p>
+
+              {/* Stock Count */}
+              {stockCount !== undefined && stockCount !== null && (
+                <div className="mt-3 flex items-center gap-2">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  <span className={`text-sm font-semibold ${stockCount > 0 ? 'text-green-600' : 'text-destructive'}`}>
+                    {stockCount > 0 ? `${stockCount} in stock` : 'Out of stock'}
+                  </span>
+                </div>
+              )}
+
+              <p className="mt-6 text-foreground-secondary leading-relaxed text-lg">{cleanDescription}</p>
 
               <div className="mt-8 flex flex-wrap gap-4">
                 {[{ icon: Shield, label: "Genuine Product" }, { icon: Truck, label: "Fast Delivery" }, { icon: Star, label: "Top Rated" }].map(({ icon: Icon, label }) => (

@@ -84,6 +84,7 @@ export interface Product {
   is_active: boolean;
   status_tags?: StatusTag[];
   sort_order?: number;
+  stock_count?: number | null;
   created_at: string;
   updated_at: string;
 }

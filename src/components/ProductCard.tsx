@@ -2,9 +2,10 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/WhatsAppIcon";
 import { useSiteSettings } from "@/contexts/SiteSettingsContext";
-import { Eye } from "lucide-react";
+import { Eye, Package } from "lucide-react";
 import { StatusTag } from "@/types/database";
 import { StatusBadges } from "@/components/StatusBadges";
+import { stripHtml } from "@/lib/utils";
 
 interface ProductCardProps {
   id: string;
@@ -16,6 +17,7 @@ interface ProductCardProps {
   isRental?: boolean;
   statusTags?: StatusTag[];
   detailPath: string;
+  stockCount?: number | null;
 }
 
 export const ProductCard = ({
@@ -28,7 +30,9 @@ export const ProductCard = ({
   isRental = false,
   statusTags = [],
   detailPath,
+  stockCount,
 }: ProductCardProps) => {
+  const cleanName = stripHtml(name);
   const { settings } = useSiteSettings();
   const currency = settings?.currency_symbol || '₹';
   
@@ -43,8 +47,8 @@ export const ProductCard = ({
   const displayOriginalPrice = originalPrice ? formatPrice(originalPrice) : null;
 
   const whatsappMessage = isRental
-    ? `Hello! I'm interested in renting: ${name}`
-    : `Hello! I would like to order: ${name} - Price: ${displayPrice}`;
+    ? `Hello! I'm interested in renting: ${cleanName}`
+    : `Hello! I would like to order: ${cleanName} - Price: ${displayPrice}`;
 
   const whatsappUrl = `https://wa.me/${settings?.whatsapp_number || ''}?text=${encodeURIComponent(
     whatsappMessage
@@ -85,11 +89,11 @@ export const ProductCard = ({
       <div className="p-4">
         <Link to={detailPath}>
           <h3 className="line-clamp-2 text-base font-semibold text-card-foreground transition-colors duration-300 hover:text-primary">
-            {name}
+            {cleanName}
           </h3>
         </Link>
 
-        {/* Price */}
+        {/* Price & Stock */}
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="text-lg font-bold text-foreground">{displayPrice}</span>
           {displayOriginalPrice && (
@@ -101,6 +105,14 @@ export const ProductCard = ({
             <span className="text-sm text-muted-foreground">/day</span>
           )}
         </div>
+        {stockCount !== undefined && stockCount !== null && (
+          <div className="mt-1 flex items-center gap-1.5">
+            <Package className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className={`text-xs font-medium ${stockCount > 0 ? 'text-green-600' : 'text-destructive'}`}>
+              {stockCount > 0 ? `${stockCount} in stock` : 'Out of stock'}
+            </span>
+          </div>
+        )}
 
         {/* CTAs */}
         <div className="mt-3 flex gap-2">

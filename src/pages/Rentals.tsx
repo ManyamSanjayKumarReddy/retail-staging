@@ -293,6 +293,7 @@ const Rentals = () => {
                       isRental
                       statusTags={item.status_tags}
                       detailPath={`/rentals/${item.id}`}
+                      stockCount={(item as any).stock_count}
                     />
                   </div>
                 ))}
