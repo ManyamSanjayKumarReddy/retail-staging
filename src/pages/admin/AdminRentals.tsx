@@ -418,10 +418,16 @@ const AdminRentals = () => {
         </div>
         <div className="flex items-center gap-2">
           {selectedItems.length > 0 && (
-            <Button variant="outline" onClick={() => setBulkTagDialogOpen(true)}>
-              <Tags className="w-4 h-4 mr-2" />
-              Update Tags ({selectedItems.length})
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setBulkTagDialogOpen(true)}>
+                <Tags className="w-4 h-4 mr-2" />
+                Update Tags ({selectedItems.length})
+              </Button>
+              <Button variant="outline" onClick={() => setBulkMoveDialogOpen(true)}>
+                <ArrowRightLeft className="w-4 h-4 mr-2" />
+                Move to Items ({selectedItems.length})
+              </Button>
+            </>
           )}
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
