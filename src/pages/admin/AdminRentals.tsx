@@ -750,6 +750,9 @@ const AdminRentals = () => {
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit
                     </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleCopyItem(item)} title="Duplicate rental">
+                      <Copy className="w-4 h-4" />
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
