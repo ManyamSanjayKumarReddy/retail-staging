@@ -18,7 +18,7 @@ import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
 import { BulkMoveDialog } from '@/components/admin/BulkMoveDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical, ArrowRightLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical, ArrowRightLeft, Copy } from 'lucide-react';
 import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
