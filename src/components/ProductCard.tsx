@@ -121,7 +121,7 @@ export const ProductCard = ({
         )}
 
         {/* CTAs */}
-        <div className="mt-3 flex gap-2">
+        <div className="mt-auto flex gap-2 pt-3">
           <Button 
             asChild 
             variant="outline" 
