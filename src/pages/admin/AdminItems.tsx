@@ -36,9 +36,31 @@ const AdminItems = () => {
   const [specModalOpen, setSpecModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
+  const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
+  const [bulkMoveLoading, setBulkMoveLoading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const { toast } = useToast();
+
+  const handleBulkMoveToRentals = async () => {
+    setBulkMoveLoading(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_rental: true, updated_at: new Date().toISOString() })
+        .in('id', selectedItems);
+      if (error) throw error;
+      toast({ title: `${selectedItems.length} item(s) moved to Rentals!` });
+      setSelectedItems([]);
+      setBulkMoveDialogOpen(false);
+      fetchItems();
+    } catch (error) {
+      console.error('Error moving items:', error);
+      toast({ title: 'Failed to move items', variant: 'destructive' });
+    } finally {
+      setBulkMoveLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
