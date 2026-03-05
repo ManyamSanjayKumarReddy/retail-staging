@@ -92,7 +92,7 @@ export const ProductCard = ({
       </Link>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <Link to={detailPath}>
           <h3 className="line-clamp-2 text-base font-semibold text-card-foreground transition-colors duration-300 hover:text-primary">
             {cleanName}
