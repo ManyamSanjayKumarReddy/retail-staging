@@ -14,9 +14,10 @@ import { StatusTagSelector } from '@/components/admin/StatusTagSelector';
 import { LinksAttachmentsEditor } from '@/components/admin/LinksAttachmentsEditor';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
+import { BulkMoveDialog } from '@/components/admin/BulkMoveDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Tags, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Package, X, Image, Tags, ArrowUp, ArrowDown, GripVertical, ArrowRightLeft } from 'lucide-react';
 import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -34,9 +35,31 @@ const AdminRentals = () => {
   const [specModalOpen, setSpecModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [bulkTagDialogOpen, setBulkTagDialogOpen] = useState(false);
+  const [bulkMoveDialogOpen, setBulkMoveDialogOpen] = useState(false);
+  const [bulkMoveLoading, setBulkMoveLoading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const { toast } = useToast();
+
+  const handleBulkMoveToItems = async () => {
+    setBulkMoveLoading(true);
+    try {
+      const { error } = await supabase
+        .from('products')
+        .update({ is_rental: false, updated_at: new Date().toISOString() })
+        .in('id', selectedItems);
+      if (error) throw error;
+      toast({ title: `${selectedItems.length} rental(s) moved to Items!` });
+      setSelectedItems([]);
+      setBulkMoveDialogOpen(false);
+      fetchRentals();
+    } catch (error) {
+      console.error('Error moving rentals:', error);
+      toast({ title: 'Failed to move rentals', variant: 'destructive' });
+    } finally {
+      setBulkMoveLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -395,10 +418,16 @@ const AdminRentals = () => {
         </div>
         <div className="flex items-center gap-2">
           {selectedItems.length > 0 && (
-            <Button variant="outline" onClick={() => setBulkTagDialogOpen(true)}>
-              <Tags className="w-4 h-4 mr-2" />
-              Update Tags ({selectedItems.length})
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setBulkTagDialogOpen(true)}>
+                <Tags className="w-4 h-4 mr-2" />
+                Update Tags ({selectedItems.length})
+              </Button>
+              <Button variant="outline" onClick={() => setBulkMoveDialogOpen(true)}>
+                <ArrowRightLeft className="w-4 h-4 mr-2" />
+                Move to Items ({selectedItems.length})
+              </Button>
+            </>
           )}
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
@@ -565,6 +594,17 @@ const AdminRentals = () => {
           setSelectedItems([]);
           fetchRentals();
         }}
+      />
+
+      {/* Bulk Move Dialog */}
+      <BulkMoveDialog
+        open={bulkMoveDialogOpen}
+        onOpenChange={setBulkMoveDialogOpen}
+        selectedCount={selectedItems.length}
+        from="Rentals"
+        to="Items"
+        onConfirm={handleBulkMoveToItems}
+        loading={bulkMoveLoading}
       />
 
       {/* Specification Modal */}
