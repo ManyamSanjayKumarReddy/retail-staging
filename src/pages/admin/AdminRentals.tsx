@@ -442,7 +442,7 @@ const AdminRentals = () => {
               </Button>
               <Button variant="outline" onClick={() => setBulkMoveDialogOpen(true)}>
                 <ArrowRightLeft className="w-4 h-4 mr-2" />
-                Move to Items ({selectedItems.length})
+                Move / Copy to Items ({selectedItems.length})
               </Button>
             </>
           )}
