@@ -42,21 +42,39 @@ const AdminItems = () => {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const handleBulkMoveToRentals = async () => {
+  const handleBulkMoveToRentals = async (action: 'move' | 'copy') => {
     setBulkMoveLoading(true);
     try {
-      const { error } = await supabase
-        .from('products')
-        .update({ is_rental: true, updated_at: new Date().toISOString() })
-        .in('id', selectedItems);
-      if (error) throw error;
-      toast({ title: `${selectedItems.length} item(s) moved to Rentals!` });
+      if (action === 'move') {
+        const { error } = await supabase
+          .from('products')
+          .update({ is_rental: true, updated_at: new Date().toISOString() })
+          .in('id', selectedItems);
+        if (error) throw error;
+        toast({ title: `${selectedItems.length} item(s) moved to Rentals!` });
+      } else {
+        // Copy: fetch selected items, then insert duplicates with is_rental=true
+        const { data: originals, error: fetchError } = await supabase
+          .from('products')
+          .select('*')
+          .in('id', selectedItems);
+        if (fetchError) throw fetchError;
+        const copies = (originals || []).map(({ id, created_at, updated_at, sort_order, ...rest }) => ({
+          ...rest,
+          is_rental: true,
+          name: `${rest.name} (Copy)`,
+          updated_at: new Date().toISOString(),
+        }));
+        const { error: insertError } = await supabase.from('products').insert(copies);
+        if (insertError) throw insertError;
+        toast({ title: `${selectedItems.length} item(s) copied to Rentals!` });
+      }
       setSelectedItems([]);
       setBulkMoveDialogOpen(false);
       fetchItems();
     } catch (error) {
-      console.error('Error moving items:', error);
-      toast({ title: 'Failed to move items', variant: 'destructive' });
+      console.error('Error:', error);
+      toast({ title: `Failed to ${action} items`, variant: 'destructive' });
     } finally {
       setBulkMoveLoading(false);
     }
