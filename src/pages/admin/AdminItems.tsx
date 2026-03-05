@@ -667,6 +667,17 @@ const AdminItems = () => {
         }}
       />
 
+      {/* Bulk Move Dialog */}
+      <BulkMoveDialog
+        open={bulkMoveDialogOpen}
+        onOpenChange={setBulkMoveDialogOpen}
+        selectedCount={selectedItems.length}
+        from="Items"
+        to="Rentals"
+        onConfirm={handleBulkMoveToRentals}
+        loading={bulkMoveLoading}
+      />
+
       {/* Specification Modal */}
       <SpecificationModal
         open={specModalOpen}
