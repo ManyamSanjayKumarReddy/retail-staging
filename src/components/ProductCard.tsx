@@ -55,7 +55,7 @@ export const ProductCard = ({
   )}`;
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-card card-hover">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card card-hover">
       {/* Status Badges */}
       <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-16px)]">
         {/* Custom Status Tags */}
