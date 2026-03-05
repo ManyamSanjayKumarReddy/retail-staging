@@ -15,6 +15,7 @@ import { StatusTagSelector } from '@/components/admin/StatusTagSelector';
 import { LinksAttachmentsEditor } from '@/components/admin/LinksAttachmentsEditor';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
+import { BulkMoveDialog } from '@/components/admin/BulkMoveDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
