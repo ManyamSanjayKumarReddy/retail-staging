@@ -55,7 +55,7 @@ export const ProductCard = ({
   )}`;
 
   return (
-    <div className="group relative overflow-hidden rounded-xl border border-border bg-card shadow-card card-hover">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card card-hover">
       {/* Status Badges */}
       <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1 max-w-[calc(100%-16px)]">
         {/* Custom Status Tags */}
@@ -92,7 +92,7 @@ export const ProductCard = ({
       </Link>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <Link to={detailPath}>
           <h3 className="line-clamp-2 text-base font-semibold text-card-foreground transition-colors duration-300 hover:text-primary">
             {cleanName}
@@ -121,7 +121,7 @@ export const ProductCard = ({
         )}
 
         {/* CTAs */}
-        <div className="mt-3 flex gap-2">
+        <div className="mt-auto flex gap-2 pt-3">
           <Button 
             asChild 
             variant="outline" 
