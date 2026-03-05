@@ -303,6 +303,41 @@ const AdminItems = () => {
     }
   };
 
+  const handleCopyItem = async (item: Product) => {
+    try {
+      // Fetch the full item to copy
+      const { id, created_at, updated_at, sort_order, ...rest } = item;
+      const newItem = {
+        ...rest,
+        name: `${item.name} (Copy)`,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await supabase.from('products').insert([newItem]).select().single();
+      if (error) throw error;
+
+      // Copy status tags
+      if (data) {
+        const { data: tagLinks } = await supabase
+          .from('product_status_tags')
+          .select('status_tag_id')
+          .eq('product_id', id);
+        if (tagLinks && tagLinks.length > 0) {
+          const tagInserts = tagLinks.map(t => ({
+            product_id: data.id,
+            status_tag_id: t.status_tag_id,
+          }));
+          await supabase.from('product_status_tags').insert(tagInserts);
+        }
+      }
+
+      toast({ title: 'Item duplicated successfully!' });
+      fetchItems();
+    } catch (error) {
+      console.error('Error copying item:', error);
+      toast({ title: 'Failed to copy item', variant: 'destructive' });
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       name: '',
