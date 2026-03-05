@@ -77,12 +77,18 @@ export const ProductCard = ({
       </div>
 
       {/* Image */}
-      <Link to={detailPath} className="block aspect-square overflow-hidden">
-        <img
-          src={image}
-          alt={name}
-          className="h-full w-full object-cover img-zoom"
-        />
+      <Link to={detailPath} className="block overflow-hidden">
+        <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+          <img
+            src={image}
+            alt={cleanName}
+            className="absolute inset-0 h-full w-full object-cover img-zoom"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/placeholder.svg';
+            }}
+          />
+        </div>
       </Link>
 
       {/* Content */}
