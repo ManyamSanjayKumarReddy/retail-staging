@@ -18,7 +18,7 @@ import { BulkStatusTagDialog } from '@/components/admin/BulkStatusTagDialog';
 import { BulkMoveDialog } from '@/components/admin/BulkMoveDialog';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical, ArrowRightLeft } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Star, X, Image, Percent, DollarSign, Tags, ArrowUp, ArrowDown, GripVertical, ArrowRightLeft, Copy } from 'lucide-react';
 import { Product, ExternalLink, Attachment } from '@/types/database';
 
 const ITEMS_PER_PAGE = 10;
@@ -300,6 +300,41 @@ const AdminItems = () => {
     } catch (error) {
       console.error('Error:', error);
       toast({ title: 'Error deleting item', variant: 'destructive' });
+    }
+  };
+
+  const handleCopyItem = async (item: Product) => {
+    try {
+      // Fetch the full item to copy
+      const { id, created_at, updated_at, sort_order, ...rest } = item;
+      const newItem = {
+        ...rest,
+        name: `${item.name} (Copy)`,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await supabase.from('products').insert([newItem]).select().single();
+      if (error) throw error;
+
+      // Copy status tags
+      if (data) {
+        const { data: tagLinks } = await supabase
+          .from('product_status_tags')
+          .select('status_tag_id')
+          .eq('product_id', id);
+        if (tagLinks && tagLinks.length > 0) {
+          const tagInserts = tagLinks.map(t => ({
+            product_id: data.id,
+            status_tag_id: t.status_tag_id,
+          }));
+          await supabase.from('product_status_tags').insert(tagInserts);
+        }
+      }
+
+      toast({ title: 'Item duplicated successfully!' });
+      fetchItems();
+    } catch (error) {
+      console.error('Error copying item:', error);
+      toast({ title: 'Failed to copy item', variant: 'destructive' });
     }
   };
 
@@ -795,6 +830,9 @@ const AdminItems = () => {
                   <div className="flex gap-2 mt-4">
                     <Button variant="outline" size="sm" className="flex-1" onClick={() => openEditDialog(item)}>
                       <Pencil className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleCopyItem(item)} title="Duplicate item">
+                      <Copy className="w-4 h-4" />
                     </Button>
                     <Button 
                       variant="outline" 

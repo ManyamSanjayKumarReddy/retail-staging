@@ -29,6 +29,7 @@ const RentalDetail = () => {
   const [statusTags, setStatusTags] = useState<StatusTag[]>([]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
     if (id) {
       fetchStatusTags();
     }
